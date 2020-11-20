@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ggboy.exam.dao.itemBank.DesignDao">
+
+    <resultMap id="DesignMP" type="com.ggboy.exam.beans.itemBank.DesignQst">
+        <id column="Design_id" property="designId"/>
+        <result column="Design_question" property="designQuestion"/>
+        <result column="Design_info" property="designInfo"/>
+        <result column="Design_answ" property="designAnsw"/>
+    </resultMap>
+
+    <select id="selectDesignQstByQuestionId" parameterType="String" resultMap="DesignMP">
+        SELECT
+        *
+        FROM
+        designtestinfo
+        WHERE
+        Design_question = #{designQuestion}
+    </select>
+
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ggboy.exam.dao.itemBank.ChoiceDao">
+
+    <resultMap id="ChoiceMP" type="com.ggboy.exam.beans.itemBank.ChoiceQst">
+        <id column="ChoiceQst_id" property="choiceQstId"/>
+        <result column="ChoiceQst_question" property="choiceQstQuestion"/>
+        <result column="ChoiceQst_info" property="choiceQstInfo"/>
+        <result column="ChoiceQst_op1" property="choiceQstOp1"/>
+        <result column="ChoiceQst_op2" property="choiceQstOp2"/>
+        <result column="ChoiceQst_op3" property="choiceQstOp3"/>
+        <result column="ChoiceQst_op4" property="choiceQstOp4"/>
+        <result column="ChoiceQst_answ" property="choiceQstAnsw"/>
+    </resultMap>
+
+    <select id="selectChoiceQstByQuestionId" parameterType="String" resultMap="ChoiceMP">
+        SELECT
+        *
+        FROM
+        choiceqstinfo
+        WHERE
+        ChoiceQst_question = #{choiceQuestion}
+    </select>
+
+</mapper>

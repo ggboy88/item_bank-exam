@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    druid:
+      url: jdbc:mysql://localhost:3306/item_bank?characterEncoding=utf8
+      driver-class-name: com.mysql.jdbc.Driver
+      username: root
+      password: 1lizhiqiangzz
+      initial-size: 1
+      min-idle: 1
+      max-active: 20
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    jedis:
+      pool:
+        max-active: 200
+        max-wait: -1
+        max-idle: 10
+        min-idle: 0
+    timeout: 6000
+mybatis:
+  type-aliases-package: com.ggboy.exam.beans
+  mapper-locations: classpath:mappers/*Mapper.xml
+server:
+  port: 8080

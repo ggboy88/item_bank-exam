@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ggboy.exam.dao.itemBank.CourseDao">
+
+    <resultMap id="SubMap" type="com.ggboy.exam.beans.itemBank.Subject">
+        <result column="Course_id" property="courseId"/>
+        <result column="Course_name" property="courseName"/>
+        <result column="Course_Specialty" property="courseSpecialty"/>
+    </resultMap>
+
+    <select id="selectSubByTeaId" parameterType="Integer" resultType="java.util.List" resultMap="SubMap">
+        SELECT
+        *
+        FROM
+        subjectinfo sbf
+        JOIN specialtyinfo stf
+        ON sbf.Course_Specialty = stf.Specialty_id
+        JOIN users u
+        ON stf.Specialty_id = u.Teacher_Specialty
+        WHERE
+        u.id = #{teaId}
+    </select>
+
+    <select id="selectNameById" parameterType="String" resultType="java.lang.String">
+        SELECT
+        sbf.Course_name
+        FROM
+        subjectinfo sbf
+        WHERE
+        sbf.Course_id = #{courseId}
+    </select>
+
+</mapper>

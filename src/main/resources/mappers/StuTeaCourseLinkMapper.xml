@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ggboy.exam.dao.exam.StuTeaCourseLinkDao">
+
+    <resultMap id="StuMap" type="com.ggboy.exam.beans.exam.StuInfo">
+        <result column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="phone" property="phone"/>
+        <result column="password" property="password"/>
+        <result column="status" property="status"/>
+        <result column="salt" property="salt"/>
+    </resultMap>
+
+    <select id="searchStuByCourseId" resultType="java.util.List" resultMap="StuMap">
+        SELECT
+        *
+        FROM
+        stu_info si
+        JOIN stu_tea_course_link stcl
+        ON si.id = stcl.stu_id
+        WHERE
+        stcl.tea_id = #{teaId}
+        AND
+        stcl.course_id = #{courseId}
+    </select>
+
+</mapper>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ggboy.exam.dao.itemBank.TOFDao">
+
+    <resultMap id="TOFMP" type="com.ggboy.exam.beans.itemBank.TOFQst">
+        <id column="TOrF_id" property="TOFId"/>
+        <result column="TOF_question" property="TOFQuestion"/>
+        <result column="TOF_info" property="TOFInfo"/>
+        <result column="TOF_answ" property="TOFAnsw"/>
+    </resultMap>
+
+    <select id="selectTOFQstByQuestionId" parameterType="String" resultMap="TOFMP">
+        SELECT
+        *
+        FROM
+        tofinfo
+        WHERE
+        TOF_question = #{tofQuestion}
+    </select>
+
+</mapper>
