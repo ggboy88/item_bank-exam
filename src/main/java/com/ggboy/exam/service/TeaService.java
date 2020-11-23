@@ -16,4 +16,6 @@ public interface TeaService {
 
     ResultResponse accessStuApply(Boolean access,String accessId);
 
+    ResultResponse selectStuApply(Integer userId);
+
 }

@@ -11,9 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class StuRegisterParam{
 
-    private Integer teaId;
-
-    private Integer courseId;
+    private Integer specialtyId;
 
     private StuInfo stuInfo;
 

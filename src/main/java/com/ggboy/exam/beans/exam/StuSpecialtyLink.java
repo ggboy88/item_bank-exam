@@ -12,9 +12,10 @@ import javax.persistence.Table;
 import java.util.UUID;
 
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "stu_tea_course_link")
-public class StuTeaCourseLink {
+@Table(name = "stu_specialty_link")
+public class StuSpecialtyLink {
 
     @Id
     @KeySql(genId = UUIDGenId.class)
@@ -24,15 +25,11 @@ public class StuTeaCourseLink {
     @Column(name = "stu_id")
     private String stuId;
 
-    @Column(name = "course_id")
-    private Integer courseId;
+    @Column(name = "specialty_id")
+    private Integer specialtyId;
 
-    @Column(name = "tea_id")
-    private Integer teaId;
-
-    public StuTeaCourseLink(String stuId, Integer courseId, Integer teaId) {
+    public StuSpecialtyLink(String stuId, Integer specialtyId) {
         this.stuId = stuId;
-        this.courseId = courseId;
-        this.teaId = teaId;
+        this.specialtyId = specialtyId;
     }
 }

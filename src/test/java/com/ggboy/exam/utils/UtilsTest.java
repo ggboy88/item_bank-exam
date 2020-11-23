@@ -39,4 +39,10 @@ public class UtilsTest {
         examInfos.forEach(System.out::println);
     }
 
+    @Test
+    public void MD5Utils(){
+        String str = MD5Util.MD5("1lizhiqiangzz");
+        System.out.println(str);
+    }
+
 }

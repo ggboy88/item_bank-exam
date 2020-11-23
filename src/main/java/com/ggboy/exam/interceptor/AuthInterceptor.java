@@ -27,7 +27,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
         String token = request.getHeader("token");
-        String user = request.getHeader("user");
+
         JSONObject json = new JSONObject();
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json; charset=utf-8");
@@ -41,9 +41,14 @@ public class AuthInterceptor implements HandlerInterceptor {
             out.append(json.toString());
             return false;
         }
+
+        String[] split = token.split("\\.");
+        String user = split[0];
+        String authToken = split[1];
+
         String token1 = String.valueOf(redisUtils.get(user));
 
-        if (!token.equals(token1)){
+        if (!authToken.equals(token1)){
             json.put("code",ResultEnum.LOGIN_EXPIRE.getCode());
             json.put("message",ResultEnum.LOGIN_EXPIRE.getMessage());
             json.put("success",false);

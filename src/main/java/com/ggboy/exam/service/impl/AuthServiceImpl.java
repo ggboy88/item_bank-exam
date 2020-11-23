@@ -2,11 +2,13 @@ package com.ggboy.exam.service.impl;
 
 import com.ggboy.exam.beans.exam.StuInfo;
 import com.ggboy.exam.beans.exam.StuRegisterParam;
+import com.ggboy.exam.beans.exam.StuSpecialtyLink;
 import com.ggboy.exam.beans.exam.StuTeaCourseLink;
 import com.ggboy.exam.beans.itemBank.User;
 import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.dao.exam.StuDao;
+import com.ggboy.exam.dao.exam.StuSpecialtyLinkDao;
 import com.ggboy.exam.dao.exam.StuTeaCourseLinkDao;
 import com.ggboy.exam.dao.itemBank.UserDao;
 import com.ggboy.exam.service.AuthService;
@@ -35,7 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private StuDao stuDao;
 
     @Resource
-    private StuTeaCourseLinkDao stuTeaCourseLinkDao;
+    private StuSpecialtyLinkDao stuSpecialtyLinkDao;
 
     @Override
     public ResultResponse teaLogin(String username, String password) {
@@ -51,25 +53,25 @@ public class AuthServiceImpl implements AuthService {
         if (user == null || user.getFlag() != 1){
             return ResultResponse.fail(ResultEnum.LOGIN_FAIL);
         }
-        String token = authUtils.getAuthToken(String.valueOf(user.getId()),username, password);
+        String authToken = authUtils.getAuthToken(String.valueOf(user.getId()),username, password);
         Map<String, Object> map = new HashMap<>();
+        String token = user.getId() + "." +authToken;
         map.put("token",token);
-        map.put("key",user.getId());
         return ResultResponse.success(map);
     }
 
     @Override
-    public ResultResponse stuLogin(String username, String password) {
+    public ResultResponse stuLogin(String phone, String password) {
 
         Example example = Example.builder(StuInfo.class)
-                .andWhere(Sqls.custom().andEqualTo("username", username)).build();
+                .andWhere(Sqls.custom().andEqualTo("phone", phone)).build();
 
         StuInfo stuInfo = stuDao.selectOneByExample(example);
         String s;
         if (stuInfo != null){
              s = MD5Util.MD5(password, stuInfo.getSalt());
         }else {
-            return ResultResponse.fail("用户名或密码错误");
+            return ResultResponse.fail("账号或密码错误");
         }
 
         assert s != null;
@@ -79,9 +81,10 @@ public class AuthServiceImpl implements AuthService {
         if (stuInfo.getStatus() != 1){
             return ResultResponse.fail(ResultEnum.LOGIN_FAIL);
         }
-        String authToken = authUtils.getAuthToken(stuInfo.getId(),username, password);
+        String authToken = authUtils.getAuthToken(stuInfo.getId(),phone, password);
         HashMap<String, Object> map = new HashMap<>();
-        map.put("token",authToken);
+        String token = stuInfo.getId() + "." + authToken;
+        map.put("token",token);
         return ResultResponse.success(map);
     }
 
@@ -114,10 +117,8 @@ public class AuthServiceImpl implements AuthService {
         stuInfo.setSalt(salt);
         try {
             stuDao.insert(stuInfo);
-            stuTeaCourseLinkDao.insert(
-                    new StuTeaCourseLink(stuInfo.getId(),
-                            stuRegisterParam.getCourseId(),
-                            stuRegisterParam.getTeaId()));
+            stuSpecialtyLinkDao.insert(new StuSpecialtyLink(stuInfo.getId()
+                    ,stuRegisterParam.getSpecialtyId()));
         }catch (Exception e){
             e.printStackTrace();
             return ResultResponse.fail(ResultEnum.SYSTEM_ERROR);

@@ -7,7 +7,7 @@ public interface AuthService {
 
     ResultResponse teaLogin(String username,String password);
 
-    ResultResponse stuLogin(String username,String password);
+    ResultResponse stuLogin(String phone,String password);
 
     ResultResponse stuRegister(StuRegisterParam stuRegisterParam);
 

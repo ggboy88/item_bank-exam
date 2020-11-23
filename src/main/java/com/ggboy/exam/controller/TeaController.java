@@ -3,12 +3,18 @@ package com.ggboy.exam.controller;
 import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.service.TeaService;
+import com.ggboy.exam.utils.TokenUtil;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+/**
+ * @Author qiang
+ * @Description //TODO 教师相关功能接口
+ * @Date 11:12 2020/11/20
+ */
 @RestController
 @RequestMapping("/tea")
 public class TeaController {
@@ -25,10 +31,8 @@ public class TeaController {
      */
     @GetMapping("/getCourse")
     public ResultResponse courseManage(HttpServletRequest request){
-        String userId = request.getHeader("user");
-        if (userId == null){
-            return ResultResponse.fail(ResultEnum.PARAM_ERROR);
-        }
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
         return teaService.getTeaCourse(userId);
     }
 
@@ -41,10 +45,8 @@ public class TeaController {
      */
     @PostMapping("/addCourse")
     public ResultResponse addCourse(List<Integer> courseIds,HttpServletRequest request){
-        String user = request.getHeader("user");
-        if (user == null){
-            return ResultResponse.fail(ResultEnum.PARAM_ERROR);
-        }
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
         return teaService.addCourse(Integer.parseInt(user),courseIds);
     }
 
@@ -57,10 +59,8 @@ public class TeaController {
      */
     @GetMapping("/searchStu")
     public ResultResponse searchStu(@RequestParam("courseId") String courseId,HttpServletRequest request){
-        String user = request.getHeader("user");
-        if (user == null){
-            return ResultResponse.fail(ResultEnum.PARAM_ERROR);
-        }
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
         return teaService.searchCourseStu(courseId,user);
     }
 
@@ -86,6 +86,20 @@ public class TeaController {
     @GetMapping("/accessStuApply")
     public ResultResponse accessStuApply(@RequestParam("access") Boolean access,@RequestParam("accessId") String accessId){
         return teaService.accessStuApply(access,accessId);
+    }
+    
+    /**
+     * @Author qiang
+     * @Description //TODO 查询学生申请加入课程信息
+     * @Date 16:26 2020/11/20
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/selectStuApply")
+    public ResultResponse selectApply(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return teaService.selectStuApply(Integer.parseInt(userId));
     }
 
 }

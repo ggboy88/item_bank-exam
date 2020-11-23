@@ -1,21 +1,23 @@
 package com.ggboy.exam.service.impl;
 
-import com.ggboy.exam.beans.exam.StuInfo;
-import com.ggboy.exam.beans.exam.StuTeaCourseLink;
-import com.ggboy.exam.beans.exam.TeaAccess;
-import com.ggboy.exam.beans.exam.TeaCourseLink;
+import com.ggboy.exam.beans.exam.*;
 import com.ggboy.exam.beans.itemBank.Subject;
 import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
+import com.ggboy.exam.dao.exam.StuDao;
 import com.ggboy.exam.dao.exam.StuTeaCourseLinkDao;
 import com.ggboy.exam.dao.exam.TeaAccessDao;
 import com.ggboy.exam.dao.exam.TeaCourseLinkDao;
+import com.ggboy.exam.dao.itemBank.CourseDao;
 import com.ggboy.exam.dao.itemBank.UserDao;
 import com.ggboy.exam.service.TeaService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tk.mybatis.mapper.entity.Example;
+import tk.mybatis.mapper.util.Sqls;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,6 +34,12 @@ public class TeaServiceImpl implements TeaService {
 
     @Resource
     private TeaAccessDao teaAccessDao;
+
+    @Resource
+    private StuDao stuDao;
+
+    @Resource
+    private CourseDao courseDao;
 
     @Override
     public ResultResponse getTeaCourse(String userId) {
@@ -102,6 +110,30 @@ public class TeaServiceImpl implements TeaService {
         stuTeaCourseLinkDao.insert(stuTeaCourseLink);
         return ResultResponse.success();
 
+    }
+
+    @Override
+    public ResultResponse selectStuApply(Integer userId) {
+        Example example = Example.builder(TeaAccess.class)
+                .andWhere(Sqls.custom()
+                        .andEqualTo("userId", userId)
+                        .andIsNull("access")).build();
+        List<TeaAccess> teaAccesses = teaAccessDao.selectByExample(example);
+        List<StuApplyResponse> stuApplyResponses = new ArrayList<>();
+        teaAccesses.forEach(teaAccess -> {
+            StuInfo stuInfo = stuDao.selectByPrimaryKey(teaAccess.getStuId());
+            Subject subject = courseDao.selectByPrimaryKey(teaAccess.getCourseId());
+            StuApplyResponse stuApplyResponse = new StuApplyResponse();
+            stuApplyResponse.setTeaAccess(teaAccess);
+            stuApplyResponse.setStuName(stuInfo.getUsername());
+            stuApplyResponse.setCourseName(subject.getCourseName());
+            stuApplyResponses.add(stuApplyResponse);
+        });
+
+        if (teaAccesses.size() == 0){
+            return ResultResponse.fail("未查询到申请信息");
+        }
+        return ResultResponse.success(stuApplyResponses);
     }
 
 }

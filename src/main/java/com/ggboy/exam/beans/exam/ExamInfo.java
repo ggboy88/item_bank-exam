@@ -1,11 +1,13 @@
 package com.ggboy.exam.beans.exam;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ggboy.exam.annotation.UUIDGenId;
 import com.ggboy.exam.common.ExamEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import tk.mybatis.mapper.annotation.KeySql;
 
 import javax.persistence.Column;
 import javax.persistence.Id;
@@ -20,8 +22,9 @@ import java.util.UUID;
 public class ExamInfo {
 
     @Id
+    @KeySql(genId = UUIDGenId.class)
     @Column(name = "id")
-    private String id = UUID.randomUUID().toString();
+    private String id;
 
     @Column(name = "course_id")
     private String courseId;

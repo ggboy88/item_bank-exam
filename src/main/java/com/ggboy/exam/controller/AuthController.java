@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
+/**
+ * @Author qiang
+ * @Description //TODO 认证功能接口
+ * @Date 11:10 2020/11/20
+ */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -34,10 +39,10 @@ public class AuthController {
      * @Param [username, password]
      * @return com.ggboy.exam.common.ResultResponse
      */
-    @PostMapping("/stu/login")
-    public ResultResponse stuLogin(@RequestParam("username") String username,
+    @GetMapping("/stu/login")
+    public ResultResponse stuLogin(@RequestParam("phone") String phone,
                                    @RequestParam("password") String password){
-        return authService.stuLogin(username,password);
+        return authService.stuLogin(phone,password);
     }
 
     /**

@@ -20,7 +20,8 @@ public class AuthConfig implements WebMvcConfigurer {
                 getInterceptor());
         registration.addPathPatterns("/**");
         registration.excludePathPatterns("/auth/**",
-                "/course/selectSpecialty");
+                "/course/selectSpecialty",
+                "/auth/stu/**");
     }
 
     @Bean

@@ -1,10 +1,13 @@
 package com.ggboy.exam.beans.exam;
 
+import com.ggboy.exam.annotation.UUIDGenId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tk.mybatis.mapper.annotation.KeySql;
 
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.UUID;
 
@@ -14,8 +17,10 @@ import java.util.UUID;
 @Table(name = "tea_access")
 public class TeaAccess {
 
+    @Id
+    @KeySql(genId = UUIDGenId.class)
     @Column(name = "id")
-    private String id = UUID.randomUUID().toString();
+    private String id;
 
     @Column(name = "course_id")
     private Integer courseId;
