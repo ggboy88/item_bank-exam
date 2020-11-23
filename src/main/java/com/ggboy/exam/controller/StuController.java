@@ -1,11 +1,10 @@
 package com.ggboy.exam.controller;
 
+import com.ggboy.exam.beans.TeaCourseLinkResponse;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.service.StudentService;
 import com.ggboy.exam.utils.TokenUtil;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -24,17 +23,41 @@ public class StuController {
 
     /**
      * @Author qiang
-     * @Description //TODO 查看当前学生可选课程信息
+     * @Description //TODO 查看当前学生可选课程信息,以及教师信息
      * @Date 11:22 2020/11/20
      * @Param []
      * @return com.ggboy.exam.common.ResultResponse
      */
-    @GetMapping
-    @RequestMapping("/searchCourse")
-    public ResultResponse selectCourse(HttpServletRequest request){
+    @GetMapping("/searchCourseAndTeacher")
+    public ResultResponse searchCourseAndTeacher(HttpServletRequest request
+            ,@RequestParam(name = "pageNum",defaultValue = "1") Integer pageNum
+            ,@RequestParam(value = "pageSize",defaultValue = "5") Integer pageSize){
         String token = request.getHeader("token");
         String user = TokenUtil.getUserId(token);
-        return studentService.selectCourse(user);
+        return studentService.searchCourseAndTeacher(user,pageNum,pageSize);
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 申请加入课程
+     * @Date 16:50 2020/11/23
+     * @Param [courseId, teaId, request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/sendApply")
+    public ResultResponse sendApply(@RequestParam("courseId") String courseId
+            ,@RequestParam("teaId") Integer teaId
+            ,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.sendApply(userId,courseId,teaId);
+    }
+
+    @GetMapping
+    public ResultResponse selectCourse(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return null;
     }
 
 }

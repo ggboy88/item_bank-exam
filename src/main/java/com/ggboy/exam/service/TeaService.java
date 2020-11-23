@@ -12,10 +12,10 @@ public interface TeaService {
 
     ResultResponse searchCourseStu(String courseId,String userId);
 
-    ResultResponse deleteCourseStu(String stuId,Integer courseId);
+    ResultResponse deleteCourseStu(String stuId,String courseId);
 
     ResultResponse accessStuApply(Boolean access,String accessId);
 
-    ResultResponse selectStuApply(Integer userId);
+    ResultResponse selectStuApply(Integer userId,Integer pageNum,Integer pageSize);
 
 }

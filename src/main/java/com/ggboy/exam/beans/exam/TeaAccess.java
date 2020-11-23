@@ -23,7 +23,7 @@ public class TeaAccess {
     private String id;
 
     @Column(name = "course_id")
-    private Integer courseId;
+    private String courseId;
 
     @Column(name = "stu_id")
     private String stuId;
@@ -36,6 +36,12 @@ public class TeaAccess {
 
     public TeaAccess(String id) {
         this.id = id;
+    }
+
+    public TeaAccess(String courseId, String stuId, Integer teaId) {
+        this.courseId = courseId;
+        this.stuId = stuId;
+        this.teaId = teaId;
     }
 }
 

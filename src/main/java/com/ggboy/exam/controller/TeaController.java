@@ -72,7 +72,7 @@ public class TeaController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @GetMapping("/deleteStu")
-    public ResultResponse deleteStu(@RequestParam("stuId") String stuId,@RequestParam("courseId") Integer courseId){
+    public ResultResponse deleteStu(@RequestParam("stuId") String stuId,@RequestParam("courseId") String courseId){
         return teaService.deleteCourseStu(stuId,courseId);
     }
     
@@ -96,10 +96,12 @@ public class TeaController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @GetMapping("/selectStuApply")
-    public ResultResponse selectApply(HttpServletRequest request){
+    public ResultResponse selectApply(HttpServletRequest request
+            ,@RequestParam(name = "pageNum",defaultValue = "1") Integer pageNum
+            ,@RequestParam(value = "pageSize",defaultValue = "10") Integer pageSize){
         String token = request.getHeader("token");
         String userId = TokenUtil.getUserId(token);
-        return teaService.selectStuApply(Integer.parseInt(userId));
+        return teaService.selectStuApply(Integer.parseInt(userId),pageNum,pageSize);
     }
 
 }

@@ -11,6 +11,7 @@ import com.ggboy.exam.dao.exam.TeaCourseLinkDao;
 import com.ggboy.exam.dao.itemBank.CourseDao;
 import com.ggboy.exam.dao.itemBank.UserDao;
 import com.ggboy.exam.service.TeaService;
+import com.github.pagehelper.PageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
@@ -80,7 +81,7 @@ public class TeaServiceImpl implements TeaService {
     }
 
     @Override
-    public ResultResponse deleteCourseStu(String stuId, Integer courseId) {
+    public ResultResponse deleteCourseStu(String stuId, String courseId) {
         StuTeaCourseLink stuTeaCourseLink = new StuTeaCourseLink();
         stuTeaCourseLink.setId(null);
         stuTeaCourseLink.setStuId(stuId);
@@ -103,7 +104,7 @@ public class TeaServiceImpl implements TeaService {
             return ResultResponse.success();
         }
         teaAccessDao.accessApply(accessId);
-        TeaAccess teaAccess = teaAccessDao.selectOne(new TeaAccess(accessId));
+        TeaAccess teaAccess = teaAccessDao.selectByPrimaryKey(accessId);
         StuTeaCourseLink stuTeaCourseLink = new StuTeaCourseLink(teaAccess.getStuId(),
                 teaAccess.getCourseId(),
                 teaAccess.getTeaId());
@@ -113,11 +114,12 @@ public class TeaServiceImpl implements TeaService {
     }
 
     @Override
-    public ResultResponse selectStuApply(Integer userId) {
+    public ResultResponse selectStuApply(Integer userId,Integer pageNum,Integer pageSize) {
         Example example = Example.builder(TeaAccess.class)
                 .andWhere(Sqls.custom()
                         .andEqualTo("userId", userId)
                         .andIsNull("access")).build();
+        PageHelper.startPage(pageNum,pageSize);
         List<TeaAccess> teaAccesses = teaAccessDao.selectByExample(example);
         List<StuApplyResponse> stuApplyResponses = new ArrayList<>();
         teaAccesses.forEach(teaAccess -> {

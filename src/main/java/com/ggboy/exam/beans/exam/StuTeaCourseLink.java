@@ -25,12 +25,12 @@ public class StuTeaCourseLink {
     private String stuId;
 
     @Column(name = "course_id")
-    private Integer courseId;
+    private String courseId;
 
     @Column(name = "tea_id")
     private Integer teaId;
 
-    public StuTeaCourseLink(String stuId, Integer courseId, Integer teaId) {
+    public StuTeaCourseLink(String stuId, String courseId, Integer teaId) {
         this.stuId = stuId;
         this.courseId = courseId;
         this.teaId = teaId;

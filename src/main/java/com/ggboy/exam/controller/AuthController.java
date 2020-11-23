@@ -1,11 +1,16 @@
 package com.ggboy.exam.controller;
 
+import com.ggboy.exam.beans.ImageVerificationCode;
 import com.ggboy.exam.beans.exam.StuRegisterParam;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 /**
  * @Author qiang
@@ -55,6 +60,21 @@ public class AuthController {
     @PostMapping("/stu/register")
     public ResultResponse stuRegister(@RequestBody StuRegisterParam stuRegisterParam){
         return authService.stuRegister(stuRegisterParam);
+    }
+    
+    /**
+     * @Author qiang
+     * @Description //TODO 获取验证码图片
+     * @Date 15:39 2020/11/23
+     * @Param [request, response]
+     * @return void
+     */
+    @GetMapping("/getVerifiCode")
+    public void getVerifiCode(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        ImageVerificationCode ivc = new ImageVerificationCode();     //用我们的验证码类，生成验证码类对象
+        BufferedImage image = ivc.getImage();  //获取验证码
+        request.getSession().setAttribute("text", ivc.getText()); //将验证码的文本存在session中
+        ivc.output(image, response.getOutputStream());
     }
 
 }
