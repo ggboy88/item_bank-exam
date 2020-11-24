@@ -2,6 +2,7 @@ package com.ggboy.exam.controller;
 
 import com.ggboy.exam.beans.ImageVerificationCode;
 import com.ggboy.exam.beans.exam.StuRegisterParam;
+import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.service.AuthService;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,13 @@ public class AuthController {
      */
     @GetMapping("/stu/login")
     public ResultResponse stuLogin(@RequestParam("phone") String phone,
-                                   @RequestParam("password") String password){
+                                   @RequestParam("password") String password,
+                                   @RequestParam("code") String code,
+                                   HttpServletRequest request){
+        String text = (String) request.getSession().getAttribute("text");
+        if (!code.equals(text)){
+            return ResultResponse.fail("验证码错误");
+        }
         return authService.stuLogin(phone,password);
     }
 

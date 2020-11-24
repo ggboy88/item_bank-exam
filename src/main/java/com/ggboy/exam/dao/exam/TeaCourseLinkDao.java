@@ -10,6 +10,6 @@ public interface TeaCourseLinkDao extends GeneralMapper<TeaCourseLink> {
 
     List<Subject> selectTeaSub(Integer userId);
 
-    List<Integer> selectTeaSubIds(Integer userId);
+    List<String> selectTeaSubIds(Integer userId);
 
 }

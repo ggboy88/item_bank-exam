@@ -11,4 +11,5 @@ public interface StudentService {
 
     ResultResponse selectCourse(String userId);
 
+    ResultResponse startExam(String examId);
 }

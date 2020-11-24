@@ -1,4 +1,4 @@
-package com.ggboy.exam.service.TimeTask;
+package com.ggboy.exam.service.timeTask;
 
 import com.ggboy.exam.service.ExamService;
 import com.ggboy.exam.utils.DateUtil;
@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 @Service
 public class ExamTask {

@@ -53,11 +53,30 @@ public class StuController {
         return studentService.sendApply(userId,courseId,teaId);
     }
 
-    @GetMapping
-    public ResultResponse selectCourse(HttpServletRequest request){
+    /**
+     * @Author qiang
+     * @Description //TODO 查询当前学生所选课程以及考试信息
+     * @Date 10:15 2020/11/24
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/selectCourseInfo")
+    public ResultResponse selectCourseInfo(HttpServletRequest request){
         String token = request.getHeader("token");
         String userId = TokenUtil.getUserId(token);
-        return null;
+        return studentService.selectCourse(userId);
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 开始考试并查看试卷内容
+     * @Date 10:54 2020/11/24
+     * @Param [examId]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/startExam")
+    public ResultResponse startExam(@RequestParam("examId") String examId){
+        return studentService.startExam(examId);
     }
 
 }

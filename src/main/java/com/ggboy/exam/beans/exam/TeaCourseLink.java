@@ -26,9 +26,9 @@ public class TeaCourseLink {
     private Integer teaId;
 
     @Column(name = "course_id")
-    private Integer courseId;
+    private String courseId;
 
-    public TeaCourseLink(Integer teaId, Integer courseId) {
+    public TeaCourseLink(Integer teaId, String courseId) {
         this.teaId = teaId;
         this.courseId = courseId;
     }

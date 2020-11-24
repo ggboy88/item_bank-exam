@@ -16,7 +16,7 @@
         tea_course_link tcl
         ON
         tcl.course_id=sub.Course_id
-        WHERE sub.tea_id = #{userId}
+        WHERE tcl.tea_id = #{userId}
     </select>
 
     <select id="selectTeaSubIds" resultType="java.util.List">

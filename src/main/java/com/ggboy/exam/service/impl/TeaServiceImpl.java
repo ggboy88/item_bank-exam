@@ -44,7 +44,6 @@ public class TeaServiceImpl implements TeaService {
 
     @Override
     public ResultResponse getTeaCourse(String userId) {
-
         List<Subject> subjects = teaCourseLinkDao.selectTeaSub(Integer.parseInt(userId));
         if (subjects.size() == 0){
             return ResultResponse.fail("当前用户没有课程");
@@ -53,11 +52,11 @@ public class TeaServiceImpl implements TeaService {
     }
 
     @Override
-    public ResultResponse addCourse(Integer userId, List<Integer> courseIds) {
-        List<Integer> courseIds1 = teaCourseLinkDao.selectTeaSubIds(userId);
-        for (Integer courseId :
+    public ResultResponse addCourse(Integer userId, List<String> courseIds) {
+        List<String> courseIds1 = teaCourseLinkDao.selectTeaSubIds(userId);
+        for (String courseId :
                 courseIds) {
-            for (Integer courseId1 :
+            for (String courseId1 :
                     courseIds1) {
                 if (courseId.equals(courseId1)){
                     return ResultResponse.fail("请勿允许选择已拥有的课程");
@@ -74,6 +73,8 @@ public class TeaServiceImpl implements TeaService {
     public ResultResponse searchCourseStu(String courseId,String userId) {
         List<StuInfo> stuInfos = stuTeaCourseLinkDao
                 .searchStuByCourseId(Integer.parseInt(courseId), Integer.parseInt(userId));
+        //屏蔽密码和盐
+        delShowStuInfo(stuInfos);
         if (stuInfos.size() == 0){
             return ResultResponse.fail("当前课程暂无学生信息");
         }
@@ -98,13 +99,14 @@ public class TeaServiceImpl implements TeaService {
     @Transactional
     @Override
     public ResultResponse accessStuApply(Boolean access, String accessId) {
-
+        TeaAccess teaAccess = teaAccessDao.selectByPrimaryKey(accessId);
         if (!access){
-            teaAccessDao.refuseApply(accessId);
+            teaAccess.setAccess(false);
+            teaAccessDao.updateByPrimaryKey(teaAccess);
             return ResultResponse.success();
         }
-        teaAccessDao.accessApply(accessId);
-        TeaAccess teaAccess = teaAccessDao.selectByPrimaryKey(accessId);
+        teaAccess.setAccess(true);
+        teaAccessDao.updateByPrimaryKey(teaAccess);
         StuTeaCourseLink stuTeaCourseLink = new StuTeaCourseLink(teaAccess.getStuId(),
                 teaAccess.getCourseId(),
                 teaAccess.getTeaId());
@@ -117,7 +119,7 @@ public class TeaServiceImpl implements TeaService {
     public ResultResponse selectStuApply(Integer userId,Integer pageNum,Integer pageSize) {
         Example example = Example.builder(TeaAccess.class)
                 .andWhere(Sqls.custom()
-                        .andEqualTo("userId", userId)
+                        .andEqualTo("teaId", userId)
                         .andIsNull("access")).build();
         PageHelper.startPage(pageNum,pageSize);
         List<TeaAccess> teaAccesses = teaAccessDao.selectByExample(example);
@@ -136,6 +138,13 @@ public class TeaServiceImpl implements TeaService {
             return ResultResponse.fail("未查询到申请信息");
         }
         return ResultResponse.success(stuApplyResponses);
+    }
+
+    private void delShowStuInfo(List<StuInfo> stuInfos){
+        stuInfos.forEach(stuInfo -> {
+            stuInfo.setPassword(null);
+            stuInfo.setSalt(null);
+        });
     }
 
 }

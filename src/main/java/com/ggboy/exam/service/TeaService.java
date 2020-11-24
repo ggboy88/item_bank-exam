@@ -8,7 +8,7 @@ public interface TeaService {
 
     ResultResponse getTeaCourse(String userId);
 
-    ResultResponse addCourse(Integer userId, List<Integer> courseIds);
+    ResultResponse addCourse(Integer userId, List<String> courseIds);
 
     ResultResponse searchCourseStu(String courseId,String userId);
 

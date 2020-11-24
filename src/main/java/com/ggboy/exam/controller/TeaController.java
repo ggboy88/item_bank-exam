@@ -44,7 +44,7 @@ public class TeaController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @PostMapping("/addCourse")
-    public ResultResponse addCourse(List<Integer> courseIds,HttpServletRequest request){
+    public ResultResponse addCourse(@RequestBody List<String> courseIds,HttpServletRequest request){
         String token = request.getHeader("token");
         String user = TokenUtil.getUserId(token);
         return teaService.addCourse(Integer.parseInt(user),courseIds);
