@@ -5,11 +5,14 @@ import com.ggboy.exam.beans.exam.StuRegisterParam;
 import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.service.AuthService;
+import com.ggboy.exam.utils.RedisUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.websocket.Session;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -25,6 +28,9 @@ public class AuthController {
     @Resource
     private AuthService authService;
 
+    @Resource
+    private RedisUtils redisUtils;
+
     /**
      * @Author qiang
      * @Description //TODO 教师登录接口
@@ -34,7 +40,14 @@ public class AuthController {
      */
     @PostMapping("/tea/login")
     public ResultResponse teaLogin(@RequestParam(value = "username",required = false) String username,
-                                    @RequestParam(value = "password",required = false) String password){
+                                   @RequestParam(value = "password",required = false) String password,
+                                   @RequestParam("code") String code,
+                                   HttpServletRequest request){
+        String ip = request.getRemoteAddr();
+        String text = (String) redisUtils.get(ip+"_yzm");
+        if (!code.equalsIgnoreCase(text)){
+            return ResultResponse.fail("验证码错误");
+        }
         return authService.teaLogin(username,password);
     }
 
@@ -50,7 +63,8 @@ public class AuthController {
                                    @RequestParam("password") String password,
                                    @RequestParam("code") String code,
                                    HttpServletRequest request){
-        String text = (String) request.getSession().getAttribute("text");
+        String ip = request.getRemoteAddr();
+        String text = (String) redisUtils.get(ip+"_yzm");
         if (!code.equals(text)){
             return ResultResponse.fail("验证码错误");
         }
@@ -80,8 +94,10 @@ public class AuthController {
     public void getVerifiCode(HttpServletRequest request, HttpServletResponse response) throws IOException {
         ImageVerificationCode ivc = new ImageVerificationCode();     //用我们的验证码类，生成验证码类对象
         BufferedImage image = ivc.getImage();  //获取验证码
-        request.getSession().setAttribute("text", ivc.getText()); //将验证码的文本存在session中
-        ivc.output(image, response.getOutputStream());
+        String ip = request.getRemoteAddr();
+        System.out.println(ip);
+        redisUtils.setex(ip+"_yzm",ivc.getText(),60);
+        ImageVerificationCode.output(image, response.getOutputStream());
     }
 
 }

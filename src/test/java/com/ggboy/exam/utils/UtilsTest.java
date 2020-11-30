@@ -45,4 +45,11 @@ public class UtilsTest {
         System.out.println(str);
     }
 
+    @Test
+    public void test1(){
+        String s = "/中国电信股份有限公司四川分公司/省公司本部/管理维护";
+        String[] split = s.split("/");
+        System.out.println(split[3]);
+    }
+
 }
