@@ -39,13 +39,13 @@ public class AuthController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @PostMapping("/tea/login")
-    public ResultResponse teaLogin(@RequestParam(value = "username",required = false) String username,
-                                   @RequestParam(value = "password",required = false) String password,
+    public ResultResponse teaLogin(@RequestParam("username") String username,
+                                   @RequestParam("password") String password,
                                    @RequestParam("code") String code,
                                    HttpServletRequest request){
         String ip = request.getRemoteAddr();
         String text = (String) redisUtils.get(ip+"_yzm");
-        if (!code.equalsIgnoreCase(text)){
+        if (!code.toUpperCase().equalsIgnoreCase(text.toUpperCase())){
             return ResultResponse.fail("验证码错误");
         }
         return authService.teaLogin(username,password);
@@ -58,17 +58,17 @@ public class AuthController {
      * @Param [username, password]
      * @return com.ggboy.exam.common.ResultResponse
      */
-    @GetMapping("/stu/login")
+    @PostMapping("/stu/login")
     public ResultResponse stuLogin(@RequestParam("phone") String phone,
                                    @RequestParam("password") String password,
                                    @RequestParam("code") String code,
                                    HttpServletRequest request){
         String ip = request.getRemoteAddr();
         String text = (String) redisUtils.get(ip+"_yzm");
-        if (!code.equals(text)){
+        if (!code.toUpperCase().equals(text.toUpperCase())){
             return ResultResponse.fail("验证码错误");
         }
-        return authService.stuLogin(phone,password);
+        return authService.stuLogin(phone,password.toUpperCase());
     }
 
     /**

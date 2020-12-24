@@ -1,7 +1,9 @@
 package com.ggboy.exam.service.impl;
 
+import com.ggboy.exam.beans.CourseStuResponse;
 import com.ggboy.exam.beans.exam.*;
 import com.ggboy.exam.beans.itemBank.Subject;
+import com.ggboy.exam.beans.itemBank.User;
 import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.dao.exam.StuDao;
@@ -12,6 +14,7 @@ import com.ggboy.exam.dao.itemBank.CourseDao;
 import com.ggboy.exam.dao.itemBank.UserDao;
 import com.ggboy.exam.service.TeaService;
 import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
@@ -43,42 +46,63 @@ public class TeaServiceImpl implements TeaService {
     private CourseDao courseDao;
 
     @Override
-    public ResultResponse getTeaCourse(String userId) {
+    public ResultResponse getTeaCourse(String userId,Integer pageSize,Integer pageNum) {
+        PageHelper.startPage(pageNum,pageSize);
         List<Subject> subjects = teaCourseLinkDao.selectTeaSub(Integer.parseInt(userId));
         if (subjects.size() == 0){
             return ResultResponse.fail("当前用户没有课程");
         }
-        return ResultResponse.success(subjects);
+        PageInfo<Subject> pageInfo = new PageInfo<>(subjects);
+        return ResultResponse.success(pageInfo);
     }
 
     @Override
     public ResultResponse addCourse(Integer userId, List<String> courseIds) {
-        List<String> courseIds1 = teaCourseLinkDao.selectTeaSubIds(userId);
-        for (String courseId :
-                courseIds) {
-            for (String courseId1 :
-                    courseIds1) {
-                if (courseId.equals(courseId1)){
-                    return ResultResponse.fail("请勿允许选择已拥有的课程");
-                }
+        courseIds.forEach(courseId -> {
+            Example example = Example.builder(TeaCourseLink.class)
+                    .andWhere(Sqls.custom()
+                            .andEqualTo("teaId", userId)
+                            .andEqualTo("courseId", courseId))
+                    .build();
+            TeaCourseLink teaCourseLink = teaCourseLinkDao.selectOneByExample(example);
+            if (teaCourseLink != null && teaCourseLink.getStatus().equals("0")){
+                teaCourseLink.setStatus("1");
+                teaCourseLinkDao.updateByExampleSelective(teaCourseLink,example);
+            }else {
+                teaCourseLinkDao.insert(new TeaCourseLink(userId, courseId));
             }
         }
-        courseIds.forEach(courseId ->
-                teaCourseLinkDao.insert(new TeaCourseLink(userId, courseId)));
+        );
 
         return ResultResponse.success();
     }
 
     @Override
-    public ResultResponse searchCourseStu(String courseId,String userId) {
-        List<StuInfo> stuInfos = stuTeaCourseLinkDao
-                .searchStuByCourseId(Integer.parseInt(courseId), Integer.parseInt(userId));
-        //屏蔽密码和盐
-        delShowStuInfo(stuInfos);
-        if (stuInfos.size() == 0){
-            return ResultResponse.fail("当前课程暂无学生信息");
+    public ResultResponse searchCourseStu(String userId) {
+        List<Subject> subjects = teaCourseLinkDao.selectTeaSub(Integer.parseInt(userId));
+        if (subjects.size() == 0){
+            return ResultResponse.fail("当前用户没有课程");
         }
-        return ResultResponse.success(stuInfos);
+        List<CourseStuResponse> list = new ArrayList<>();
+        subjects.forEach(subject -> {
+            CourseStuResponse courseStuResponse = new CourseStuResponse();
+            List<StuInfo> stuInfos = stuTeaCourseLinkDao
+                    .searchStuByCourseId(Integer.parseInt(subject.getCourseId()), Integer.parseInt(userId));
+            if (stuInfos != null){
+                // 屏蔽掉学生密码和盐
+                delShowStuInfo(stuInfos);
+                courseStuResponse.setStuInfos(stuInfos);
+            }
+            courseStuResponse.setSubject(subject);
+            list.add(courseStuResponse);
+        });
+
+        //屏蔽密码和盐
+
+        if (list.size() == 0){
+            return ResultResponse.fail("当前教师暂无学生信息");
+        }
+        return ResultResponse.success(list);
     }
 
     @Override
@@ -138,6 +162,37 @@ public class TeaServiceImpl implements TeaService {
             return ResultResponse.fail("未查询到申请信息");
         }
         return ResultResponse.success(stuApplyResponses);
+    }
+
+    @Override
+    public ResultResponse selectUser(Integer userId) {
+        User user = userDao.selectByPrimaryKey(userId);
+        return ResultResponse.success(user);
+    }
+
+    @Override
+    public ResultResponse selectStuApplyAccount(Integer userId) {
+        Example example = Example.builder(TeaAccess.class)
+                .andWhere(Sqls.custom().andEqualTo("teaId", userId).andIsNull("access")).build();
+        int count = teaAccessDao.selectCountByExample(example);
+        return ResultResponse.success(count);
+    }
+
+    @Override
+    public ResultResponse deleteTeaCourse(String userId, String courseId) {
+        Example example = Example.builder(TeaCourseLink.class).andWhere(Sqls.custom()
+                .andEqualTo("teaId", Integer.parseInt(userId))
+                .andEqualTo("courseId", courseId)).build();
+        TeaCourseLink teaCourseLink = new TeaCourseLink();
+        teaCourseLink.setId(null);
+        teaCourseLink.setStatus("0");
+        try{
+            teaCourseLinkDao.updateByExampleSelective(teaCourseLink,example);
+        }catch (Exception e){
+            e.printStackTrace();
+            return ResultResponse.fail(ResultEnum.SYSTEM_ERROR);
+        }
+        return ResultResponse.success();
     }
 
     private void delShowStuInfo(List<StuInfo> stuInfos){

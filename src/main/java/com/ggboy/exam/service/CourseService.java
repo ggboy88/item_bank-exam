@@ -4,8 +4,10 @@ import com.ggboy.exam.common.ResultResponse;
 
 public interface CourseService {
 
-    ResultResponse selectCourseList(String userId);
+    ResultResponse selectCourseList(String userId,Integer pageNum,Integer pageSize);
 
     ResultResponse selectSpecialty();
+
+    ResultResponse selectTeaSpecialtyName(String userId);
 
 }

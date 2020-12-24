@@ -19,8 +19,10 @@ spring:
         max-idle: 10
         min-idle: 0
     timeout: 6000
+  mvc:
+    dispatch-options-request: true
 mybatis:
   type-aliases-package: com.ggboy.exam.beans
   mapper-locations: classpath:mappers/*Mapper.xml
 server:
-  port: 8080
+  port: 8181

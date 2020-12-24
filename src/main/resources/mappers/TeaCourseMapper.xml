@@ -17,6 +17,7 @@
         ON
         tcl.course_id=sub.Course_id
         WHERE tcl.tea_id = #{userId}
+        AND tcl.status = "1"
     </select>
 
     <select id="selectTeaSubIds" resultType="java.util.List">

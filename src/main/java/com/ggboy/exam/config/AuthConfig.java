@@ -18,14 +18,15 @@ public class AuthConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
-        //认证器注册
+        //拦截器注册
+        registry.addInterceptor(new LogInterceptor()).addPathPatterns("/**");
         InterceptorRegistration registration = registry.addInterceptor(
                 getInterceptor());
         registration.addPathPatterns("/**");
-        registration.excludePathPatterns("/auth/**",
-                "/course/selectSpecialty",
-                "/auth/stu/**");
-        registry.addInterceptor(new LogInterceptor()).addPathPatterns("/**");
+        registration.excludePathPatterns("/auth/**")
+                .excludePathPatterns("/course/selectSpecialty")
+                .excludePathPatterns("/auth/tea/login")
+                .excludePathPatterns("/auth/stu/login","/auth/stu/register");
 
     }
 

@@ -5,6 +5,7 @@ import com.ggboy.exam.service.CourseService;
 import com.ggboy.exam.utils.TokenUtil;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -30,10 +31,12 @@ public class CourseController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @GetMapping("/selectCourse")
-    public ResultResponse selectCourse(HttpServletRequest request){
+    public ResultResponse selectCourse(HttpServletRequest request,
+                                       @RequestParam(name = "pageNum",defaultValue = "1") Integer pageNum,
+                                       @RequestParam(name = "pageSize",defaultValue = "5") Integer pageSize){
         String token = request.getHeader("token");
         String userId = TokenUtil.getUserId(token);
-        return courseService.selectCourseList(userId);
+        return courseService.selectCourseList(userId,pageNum,pageSize);
     }
 
     /**
@@ -48,5 +51,18 @@ public class CourseController {
         return courseService.selectSpecialty();
     }
 
+    /**
+     * @Author qiang
+     * @Description //TODO 查询当前教师学院姓名
+     * @Date 16:04 2020/12/3
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/selectTeaSpecialtyName")
+    public ResultResponse selectTeaSpecialtyName(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return courseService.selectTeaSpecialtyName(userId);
+    }
 
 }

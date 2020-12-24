@@ -11,15 +11,23 @@
 
     <select id="selectSubByTeaId" parameterType="Integer" resultType="java.util.List" resultMap="SubMap">
         SELECT
-        *
+	    sbf.*
         FROM
-        subjectinfo sbf
-        JOIN specialtyinfo stf
-        ON sbf.Course_Specialty = stf.Specialty_id
-        JOIN users u
-        ON stf.Specialty_id = u.Teacher_Specialty
+	        subjectinfo sbf
+	    LEFT JOIN specialtyinfo stf ON sbf.Course_Specialty = stf.Specialty_id
+	    LEFT JOIN users u ON stf.Specialty_id = u.Teacher_Specialty
         WHERE
-        u.id = #{teaId}
+	    u.id = #{id}
+	    AND sbf.Course_id NOT IN (
+	        SELECT
+		        sub.Course_id
+	        FROM
+		        subjectinfo sub
+		        JOIN tea_course_link tcl ON tcl.course_id = sub.Course_id
+	        WHERE
+		        tcl.tea_id = #{id}
+	        AND tcl.STATUS = "1"
+	    )
     </select>
 
     <select id="selectNameById" parameterType="String" resultType="java.lang.String">

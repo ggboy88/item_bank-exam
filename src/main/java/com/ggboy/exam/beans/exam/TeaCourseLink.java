@@ -28,6 +28,9 @@ public class TeaCourseLink {
     @Column(name = "course_id")
     private String courseId;
 
+    @Column(name = "status")
+    private String status = "1";
+
     public TeaCourseLink(Integer teaId, String courseId) {
         this.teaId = teaId;
         this.courseId = courseId;
