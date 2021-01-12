@@ -1,5 +1,6 @@
 package com.ggboy.exam.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ggboy.exam.beans.ExamSearchCondition;
 import com.ggboy.exam.beans.exam.ExamInfo;
 import com.ggboy.exam.common.ResultResponse;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Timestamp;
+import java.util.Date;
 
 /**
  * @Author qiang
@@ -30,8 +33,10 @@ public class ExamController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @PostMapping("/addExam")
-    public ResultResponse addExam(@RequestBody ExamInfo examInfo){
-        return examService.addExam(examInfo);
+    public ResultResponse addExam(@RequestBody JSONObject examInfo,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
+        return examService.addExam(examInfo,Integer.parseInt(user));
     }
     
     /**
@@ -54,10 +59,13 @@ public class ExamController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @GetMapping("/list/paper")
-    public ResultResponse listPapers(@RequestParam("courseId") String courseId, HttpServletRequest request){
+    public ResultResponse listPapers(@RequestParam("courseId") String courseId,
+                                     @RequestParam(name = "pageNum",defaultValue = "1") Integer pageNum,
+                                     @RequestParam(name = "pageSize",defaultValue = "5") Integer pageSize,
+                                     HttpServletRequest request){
         String token = request.getHeader("token");
         String user = TokenUtil.getUserId(token);
-        return examService.listPaper(courseId,Integer.parseInt(user));
+        return examService.listPaper(courseId,Integer.parseInt(user),pageNum,pageSize);
     }
 
     /**
@@ -67,13 +75,44 @@ public class ExamController {
      * @Param [pageNum, pageSize, startTime, EndTime, courseId, paperId, status]
      * @return com.ggboy.exam.common.ResultResponse
      */
-    @PostMapping("/list/exam")
-    public ResultResponse listExam(@RequestBody ExamSearchCondition examSearchCondition,HttpServletRequest request){
+    @GetMapping("/list/exam")
+    public ResultResponse listExam(@RequestParam(name = "pageNum",defaultValue = "1",required = false) Integer pageNum,
+                                   @RequestParam(name = "pageSize",defaultValue = "5",required = false) Integer pageSize,
+                                   @RequestParam(value = "startTime",required = false) Timestamp startTime,
+                                   @RequestParam(value = "endTime",required = false) Timestamp endTime,
+                                   @RequestParam(value = "courseName",required = false) String courseName,
+                                   @RequestParam(value = "paperId",required = false) String paperId,
+                                   @RequestParam(value = "status",required = false) String status,
+                                   HttpServletRequest request){
+        ExamSearchCondition examSearchCondition = new ExamSearchCondition(pageNum, pageSize, startTime, endTime, courseName, paperId, status);
         String token = request.getHeader("token");
         String user = TokenUtil.getUserId(token);
         return examService.listExam(examSearchCondition,Integer.parseInt(user));
     }
 
+    /**
+     * @Author qiang
+     * @Description //TODO 考试开始前提醒考生
+     * @Date 16:04 2021/1/11
+     * @Param [examId]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/alarmExam")
+    public ResultResponse alarmExam(@RequestParam("examId") String examId){
+        String[] split = examId.split("alarm");
+        return examService.alarmExam(split[0]);
+    }
 
-
+    /**
+     * @Author qiang
+     * @Description //TODO 删除考试信息
+     * @Date 16:15 2021/1/11
+     * @Param [examId]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/deleteExam")
+    public ResultResponse deleteExam(@RequestParam("examId") String examId){
+        String[] split = examId.split("delete");
+        return examService.deleteExam(split[0]);
+    }
 }

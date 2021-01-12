@@ -4,6 +4,7 @@ import com.ggboy.exam.beans.CourseStuResponse;
 import com.ggboy.exam.beans.exam.*;
 import com.ggboy.exam.beans.itemBank.Subject;
 import com.ggboy.exam.beans.itemBank.User;
+import com.ggboy.exam.beans.vo.UpdateUserVo;
 import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.dao.exam.StuDao;
@@ -17,11 +18,20 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import tk.mybatis.mapper.entity.Example;
 import tk.mybatis.mapper.util.Sqls;
 
 import javax.annotation.Resource;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Service
@@ -78,41 +88,47 @@ public class TeaServiceImpl implements TeaService {
     }
 
     @Override
-    public ResultResponse searchCourseStu(String userId) {
-        List<Subject> subjects = teaCourseLinkDao.selectTeaSub(Integer.parseInt(userId));
-        if (subjects.size() == 0){
-            return ResultResponse.fail("当前用户没有课程");
-        }
-        List<CourseStuResponse> list = new ArrayList<>();
-        subjects.forEach(subject -> {
-            CourseStuResponse courseStuResponse = new CourseStuResponse();
-            List<StuInfo> stuInfos = stuTeaCourseLinkDao
-                    .searchStuByCourseId(Integer.parseInt(subject.getCourseId()), Integer.parseInt(userId));
-            if (stuInfos != null){
-                // 屏蔽掉学生密码和盐
-                delShowStuInfo(stuInfos);
-                courseStuResponse.setStuInfos(stuInfos);
-            }
-            courseStuResponse.setSubject(subject);
-            list.add(courseStuResponse);
-        });
-
+    public ResultResponse searchCourseStu(String courseId,String userId) {
+        List<StuInfo> stuInfos = stuTeaCourseLinkDao
+                .searchStuByCourseId(Integer.parseInt(courseId), Integer.parseInt(userId));
         //屏蔽密码和盐
-
-        if (list.size() == 0){
-            return ResultResponse.fail("当前教师暂无学生信息");
+        delShowStuInfo(stuInfos);
+        if (stuInfos.size() == 0){
+            return ResultResponse.fail("当前课程暂无学生信息");
         }
-        return ResultResponse.success(list);
+        return ResultResponse.success(stuInfos);
     }
 
     @Override
-    public ResultResponse deleteCourseStu(String stuId, String courseId) {
+    public ResultResponse clearAllStu(String courseId, String userId) {
+
+        Example example = Example.builder(StuTeaCourseLink.class).andWhere(Sqls.custom()
+                .andEqualTo("courseId", courseId)
+                .andEqualTo("teaId", Integer.parseInt(userId))).build();
+        StuTeaCourseLink link = new StuTeaCourseLink();
+        link.setId(null);
+        link.setDeleteFlag(0);
+        try {
+            stuTeaCourseLinkDao.updateByExampleSelective(link,example);
+        }catch (Exception e){
+            e.printStackTrace();
+            return ResultResponse.fail(ResultEnum.SYSTEM_ERROR);
+        }
+        return ResultResponse.success();
+    }
+
+    @Override
+    public ResultResponse deleteCourseStu(String stuId, String courseId,String user) {
+        Example example = Example.builder(StuTeaCourseLink.class)
+                .andWhere(Sqls.custom()
+                        .andEqualTo("stuId", stuId)
+                        .andEqualTo("courseId", courseId)
+                        .andEqualTo("teaId", Integer.parseInt(user))).build();
         StuTeaCourseLink stuTeaCourseLink = new StuTeaCourseLink();
         stuTeaCourseLink.setId(null);
-        stuTeaCourseLink.setStuId(stuId);
-        stuTeaCourseLink.setCourseId(courseId);
+        stuTeaCourseLink.setDeleteFlag(0);
         try {
-            stuTeaCourseLinkDao.delete(stuTeaCourseLink);
+            stuTeaCourseLinkDao.updateByExampleSelective(stuTeaCourseLink,example);
         }catch (Exception e){
             e.printStackTrace();
             return ResultResponse.fail(ResultEnum.SYSTEM_ERROR);
@@ -147,21 +163,23 @@ public class TeaServiceImpl implements TeaService {
                         .andIsNull("access")).build();
         PageHelper.startPage(pageNum,pageSize);
         List<TeaAccess> teaAccesses = teaAccessDao.selectByExample(example);
+        if (teaAccesses.size() == 0){
+            return ResultResponse.fail("未查询到申请信息");
+        }
         List<StuApplyResponse> stuApplyResponses = new ArrayList<>();
         teaAccesses.forEach(teaAccess -> {
             StuInfo stuInfo = stuDao.selectByPrimaryKey(teaAccess.getStuId());
             Subject subject = courseDao.selectByPrimaryKey(teaAccess.getCourseId());
             StuApplyResponse stuApplyResponse = new StuApplyResponse();
-            stuApplyResponse.setTeaAccess(teaAccess);
             stuApplyResponse.setStuName(stuInfo.getUsername());
+            stuApplyResponse.setStuPhone(stuInfo.getPhone());
             stuApplyResponse.setCourseName(subject.getCourseName());
+            stuApplyResponse.setAccessId(teaAccess.getId());
             stuApplyResponses.add(stuApplyResponse);
         });
+        PageInfo<StuApplyResponse> pageInfo = new PageInfo<>(stuApplyResponses);
 
-        if (teaAccesses.size() == 0){
-            return ResultResponse.fail("未查询到申请信息");
-        }
-        return ResultResponse.success(stuApplyResponses);
+        return ResultResponse.success(pageInfo);
     }
 
     @Override
@@ -193,6 +211,67 @@ public class TeaServiceImpl implements TeaService {
             return ResultResponse.fail(ResultEnum.SYSTEM_ERROR);
         }
         return ResultResponse.success();
+    }
+
+    @Override
+    public ResultResponse getOwnMsg(String userId) {
+        User user = userDao.selectByPrimaryKey(Integer.parseInt(userId));
+        return ResultResponse.success(user);
+    }
+
+    @Override
+    public ResultResponse updateUser(UpdateUserVo updateUserVo, String userId) {
+        User user = new User();
+        user.setId(Integer.parseInt(userId));
+        user.setUsername(updateUserVo.getUsername());
+        user.setPassword(updateUserVo.getPassword());
+        user.setTeacherName(updateUserVo.getName());
+
+        userDao.updateByPrimaryKeySelective(user);
+
+        return ResultResponse.success();
+    }
+
+    @Override
+    public ResultResponse uploadHead(MultipartFile file,String userId){
+        String path = "D:/我的文档/Documents/HBuilderProjects/exam/static/img/head/"+userId;
+        String originalFilename = file.getOriginalFilename();
+
+        assert originalFilename != null;
+        String[] split = originalFilename.split("\\.");
+        String fileName = System.currentTimeMillis() + userId +"."+split[1];
+        byte[] bytes;
+        try {
+            bytes = file.getBytes();
+            uploadPic(bytes,path,fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResultResponse.fail(e.getMessage());
+        }
+        User user = new User();
+        user.setId(Integer.parseInt(userId));
+        user.setImageUrl(path+"/"+fileName);
+        userDao.updateByPrimaryKeySelective(user);
+
+        return ResultResponse.success();
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 图片上传
+     * @Date 14:47 2020/12/30
+     * @Param [file, filePath, fileName]
+     * @return void
+     */
+    private void uploadPic(byte[] file,String filePath,String fileName) throws IOException {
+        File targetFile = new File(filePath);
+        if (!targetFile.exists()){
+            targetFile.mkdirs();
+        }
+        FileOutputStream fileOutputStream = new FileOutputStream(filePath+"/"+fileName);
+        fileOutputStream.write(file);
+        fileOutputStream.flush();
+        fileOutputStream.close();
     }
 
     private void delShowStuInfo(List<StuInfo> stuInfos){

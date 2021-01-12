@@ -30,6 +30,9 @@ public class StuTeaCourseLink {
     @Column(name = "tea_id")
     private Integer teaId;
 
+    @Column(name = "delete_flag")
+    private Integer deleteFlag = 1;
+
     public StuTeaCourseLink(String stuId, String courseId, Integer teaId) {
         this.stuId = stuId;
         this.courseId = courseId;

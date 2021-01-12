@@ -26,6 +26,8 @@ public class User {
     private String username;
     @Column(name = "password")
     private String password;
+    @Column(name = "image_url")
+    private String imageUrl;
     @Column(name = "flag")
     private Integer flag;
 

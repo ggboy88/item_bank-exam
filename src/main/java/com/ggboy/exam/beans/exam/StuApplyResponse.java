@@ -9,12 +9,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class StuApplyResponse {
 
+    private String accessId;
+
     private String courseName;
 
     private String stuName;
 
-    private String access;
+    private String stuPhone;
 
-    private TeaAccess teaAccess;
+    private String access;
 
 }

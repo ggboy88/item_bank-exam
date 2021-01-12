@@ -19,7 +19,7 @@ public class ExamSearchCondition {
 
     private Timestamp endTime;
 
-    private String courseId;
+    private String CourseName;
 
     private String paperId;
 

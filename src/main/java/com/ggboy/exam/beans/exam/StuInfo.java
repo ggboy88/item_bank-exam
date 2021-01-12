@@ -37,6 +37,9 @@ public class StuInfo {
     @Column(name = "salt")
     private String salt;
 
+    @Column(name = "image_url")
+    private String imUrl;
+
     public StuInfo(String phone){
         this.phone = phone;
     }

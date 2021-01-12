@@ -23,6 +23,8 @@
         stcl.tea_id = #{teaId}
         AND
         stcl.course_id = #{courseId}
+        AND
+        delete_flag = 1
     </select>
 
 </mapper>

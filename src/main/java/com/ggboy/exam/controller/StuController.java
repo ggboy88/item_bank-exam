@@ -79,4 +79,11 @@ public class StuController {
         return studentService.startExam(examId);
     }
 
+    @GetMapping("/queryUser")
+    public ResultResponse queryStuInfo(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.queryStu(userId);
+    }
+
 }

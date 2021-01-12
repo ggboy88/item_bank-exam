@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ggboy.exam.beans.vo.CourseReqVo;
+import com.ggboy.exam.beans.vo.UpdateUserVo;
 import com.ggboy.exam.common.ResultEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.service.TeaService;
 import com.ggboy.exam.utils.TokenUtil;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -67,7 +69,6 @@ public class TeaController {
     @PostMapping("/addCourse")
     public ResultResponse addCourse(@RequestBody JSONArray courseIds, HttpServletRequest request){
 
-        System.out.println(courseIds);
         List<String> courseId = JSONObject.parseArray(JSON.toJSONString(courseIds), String.class);
 
         String token = request.getHeader("token");
@@ -77,16 +78,30 @@ public class TeaController {
 
     /**
      * @Author qiang
-     * @Description //TODO 查询当前用户拥有课程下所有学生信息
+     * @Description //TODO 查询当前用户当前课程下所有学生信息
      * @Date 14:44 2020/11/4
      * @Param [courseId, request]
      * @return com.ggboy.exam.common.ResultResponse
      */
     @GetMapping("/searchStu")
-    public ResultResponse searchStu(HttpServletRequest request){
+    public ResultResponse searchStu(@RequestParam("courseId") String courseId,HttpServletRequest request){
         String token = request.getHeader("token");
         String user = TokenUtil.getUserId(token);
-        return teaService.searchCourseStu(user);
+        return teaService.searchCourseStu(courseId,user);
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 清空当前选择课程所有学生信息
+     * @Date 11:14 2020/12/28
+     * @Param [courseId, request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/clearAll")
+    public ResultResponse clearAllStu(@RequestParam("courseId") String courseId,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
+        return teaService.clearAllStu(courseId,user);
     }
 
     /**
@@ -97,8 +112,10 @@ public class TeaController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @GetMapping("/deleteStu")
-    public ResultResponse deleteStu(@RequestParam("stuId") String stuId,@RequestParam("courseId") String courseId){
-        return teaService.deleteCourseStu(stuId,courseId);
+    public ResultResponse deleteStu(@RequestParam("stuId") String stuId,@RequestParam("courseId") String courseId,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
+        return teaService.deleteCourseStu(stuId,courseId,user);
     }
     
     /**
@@ -155,6 +172,35 @@ public class TeaController {
         String token = request.getHeader("token");
         String userId = TokenUtil.getUserId(token);
         return teaService.selectUser(Integer.parseInt(userId));
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 查看个人信息
+     * @Date 14:07 2020/12/28
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/getOwnMsg")
+    public ResultResponse getOwnMsg(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return teaService.getOwnMsg(userId);
+    }
+
+    @PostMapping("/updateUser")
+    public ResultResponse updateUser(@RequestBody JSONObject updateUser,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        UpdateUserVo updateUserVo = updateUser.toJavaObject(UpdateUserVo.class);
+        return teaService.updateUser(updateUserVo,userId);
+    }
+
+    @PostMapping("/uploadHead")
+    public ResultResponse uploadHead(@RequestParam("file") MultipartFile file,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return teaService.uploadHead(file,userId);
     }
 
 }

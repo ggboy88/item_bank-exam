@@ -1,7 +1,10 @@
 package com.ggboy.exam.service;
 
+import com.ggboy.exam.beans.vo.UpdateUserVo;
 import com.ggboy.exam.common.ResultResponse;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface TeaService {
@@ -10,9 +13,11 @@ public interface TeaService {
 
     ResultResponse addCourse(Integer userId, List<String> courseIds);
 
-    ResultResponse searchCourseStu(String userId);
+    ResultResponse searchCourseStu(String courseId,String userId);
 
-    ResultResponse deleteCourseStu(String stuId,String courseId);
+    ResultResponse clearAllStu(String courseId,String userId);
+
+    ResultResponse deleteCourseStu(String stuId,String courseId,String user);
 
     ResultResponse accessStuApply(Boolean access,String accessId);
 
@@ -23,5 +28,11 @@ public interface TeaService {
     ResultResponse selectStuApplyAccount(Integer userId);
 
     ResultResponse deleteTeaCourse(String userId,String courseId);
+
+    ResultResponse getOwnMsg(String userId);
+
+    ResultResponse updateUser(UpdateUserVo updateUserVo,String userId);
+
+    ResultResponse uploadHead(MultipartFile file,String userId);
 
 }

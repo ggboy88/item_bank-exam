@@ -3,10 +3,7 @@ package com.ggboy.exam.service.impl;
 import com.ggboy.exam.beans.PaperInfoResponse;
 import com.ggboy.exam.beans.StuCourseInfoResponse;
 import com.ggboy.exam.beans.TeaCourseLinkResponse;
-import com.ggboy.exam.beans.exam.ExamInfo;
-import com.ggboy.exam.beans.exam.StuTeaCourseLink;
-import com.ggboy.exam.beans.exam.TeaAccess;
-import com.ggboy.exam.beans.exam.TeaCourseLink;
+import com.ggboy.exam.beans.exam.*;
 import com.ggboy.exam.beans.itemBank.*;
 import com.ggboy.exam.common.ExamEnum;
 import com.ggboy.exam.common.ResultResponse;
@@ -24,6 +21,9 @@ import java.util.List;
 
 @Service
 public class StudentServiceImpl implements StudentService {
+
+    @Resource
+    private StuDao stuDao;
 
     @Resource
     private StuSpecialtyLinkDao stuSpecialtyLinkDao;
@@ -148,6 +148,15 @@ public class StudentServiceImpl implements StudentService {
         Paper paper = paperDao.selectByPrimaryKey(examInfo.getPaperId());
         PaperInfoResponse paperInfoResponse = searchPaperDetails(paper);
         return ResultResponse.success(paperInfoResponse);
+    }
+
+    @Override
+    public ResultResponse queryStu(String userId) {
+        Example example = Example.builder(StuInfo.class).andWhere(Sqls.custom()
+                .andEqualTo("status", 1)
+                .andEqualTo("id", userId)).build();
+        StuInfo stuInfo = stuDao.selectOneByExample(example);
+        return ResultResponse.success(stuInfo);
     }
 
     /**
