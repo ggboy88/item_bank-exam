@@ -5,19 +5,28 @@ import com.ggboy.exam.beans.StuCourseInfoResponse;
 import com.ggboy.exam.beans.TeaCourseLinkResponse;
 import com.ggboy.exam.beans.exam.*;
 import com.ggboy.exam.beans.itemBank.*;
+import com.ggboy.exam.beans.vo.UpdateUserVo;
 import com.ggboy.exam.common.ExamEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.dao.exam.*;
 import com.ggboy.exam.dao.itemBank.*;
 import com.ggboy.exam.service.StudentService;
+import com.ggboy.exam.utils.MD5Util;
+import com.ggboy.exam.utils.RedisUtils;
 import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import tk.mybatis.mapper.entity.Example;
 import tk.mybatis.mapper.util.Sqls;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class StudentServiceImpl implements StudentService {
@@ -61,13 +70,16 @@ public class StudentServiceImpl implements StudentService {
     @Resource
     private BigDao bigDao;
 
+    @Resource
+    private RedisUtils redisUtils;
+
     @Override
     public ResultResponse searchCourseAndTeacher(String stuId,Integer pageNum,Integer pageSize) {
-
+        List<Subject> count = stuSpecialtyLinkDao.selectSubjectsByStuId(stuId);
         PageHelper.startPage(pageNum,pageSize);
         List<Subject> subjects = stuSpecialtyLinkDao.selectSubjectsByStuId(stuId);
         if (subjects.size() == 0){
-            return ResultResponse.fail("当前学院课程为0，请联系老师处理");
+            return ResultResponse.fail("当前学院课程为0，请联系管理员处理");
         }
         List<TeaCourseLinkResponse> teaCourseLinkResponses = new ArrayList<>();
         subjects.forEach(subject -> {
@@ -77,14 +89,16 @@ public class StudentServiceImpl implements StudentService {
             teaCourseLinkResponse.setSubject(subject);
             teaCourseLinkResponses.add(teaCourseLinkResponse);
         });
-        return ResultResponse.success(teaCourseLinkResponses);
+        PageInfo<TeaCourseLinkResponse> pageInfo = new PageInfo<>(teaCourseLinkResponses);
+        pageInfo.setTotal(count.size());
+        return ResultResponse.success(pageInfo);
     }
 
     @Override
     public ResultResponse sendApply(String userId, String courseId, Integer teaId) {
         TeaAccess teaAccess = new TeaAccess(courseId,userId,teaId);
         teaAccessDao.insert(teaAccess);
-        return ResultResponse.success("请求发送成功，等待教师审核");
+        return ResultResponse.success("申请成功，等待教师审核");
     }
 
     /**
@@ -97,10 +111,10 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public ResultResponse selectCourse(String userId) {
         Example example = Example.builder(StuTeaCourseLink.class).andWhere(Sqls.custom()
-                .andEqualTo("stuId", userId)).build();
+                .andEqualTo("stuId", userId).andEqualTo("deleteFlag",1)).build();
         List<StuTeaCourseLink> stuTeaCourseLinks = stuTeaCourseLinkDao.selectByExample(example);
         if (stuTeaCourseLinks.size() == 0){
-            return ResultResponse.fail("当前学生无课程");
+            return ResultResponse.fail("当前用户无课程");
         }
         List<StuCourseInfoResponse> stuCourseInfoResponses = new ArrayList<>();
         stuTeaCourseLinks.forEach(stuTeaCourseLink -> {
@@ -116,10 +130,10 @@ public class StudentServiceImpl implements StudentService {
 
             if (examInfos.size() != 0){
                 stuCourseInfoResponse.setHasExam(true);
-                stuCourseInfoResponse.setTeaName(userDao.selectUserNameById(stuTeaCourseLink.getTeaId()));
-                stuCourseInfoResponse.setSubject(subject);
                 stuCourseInfoResponse.setExamInfos(examInfos);
             }
+            stuCourseInfoResponse.setTeaName(userDao.selectUserNameById(stuTeaCourseLink.getTeaId()));
+            stuCourseInfoResponse.setSubject(subject);
 
             stuCourseInfoResponses.add(stuCourseInfoResponse);
 
@@ -157,6 +171,61 @@ public class StudentServiceImpl implements StudentService {
                 .andEqualTo("id", userId)).build();
         StuInfo stuInfo = stuDao.selectOneByExample(example);
         return ResultResponse.success(stuInfo);
+    }
+
+    @Override
+    public ResultResponse checkPass(String password,String userId) {
+        StuInfo stuInfo = stuDao.selectByPrimaryKey(userId);
+        String s = MD5Util.MD5(password.toUpperCase(), stuInfo.getSalt());
+        if (s.toUpperCase().equals(stuInfo.getPassword())){
+            return ResultResponse.success();
+        }
+        return ResultResponse.fail();
+    }
+
+    @Override
+    public ResultResponse updateUser(UpdateUserVo updateUserVo, String userId) {
+        StuInfo stuInfo = stuDao.selectByPrimaryKey(userId);
+        stuInfo.setUsername(updateUserVo.getName());
+        stuInfo.setPhone(updateUserVo.getUsername());
+        String salt = MD5Util.randomNum();
+        String newPass = MD5Util.MD5(updateUserVo.getPassword(), salt);
+        stuInfo.setSalt(salt);
+        stuInfo.setPassword(newPass);
+        stuDao.updateByPrimaryKey(stuInfo);
+        return ResultResponse.success();
+    }
+
+    @Override
+    public ResultResponse uploadHead(MultipartFile file, String userId) {
+        String path = "D:/我的文档/Documents/HBuilderProjects/exam/static/img/head/"+userId;
+        String originalFilename = file.getOriginalFilename();
+
+        assert originalFilename != null;
+        String[] split = originalFilename.split("\\.");
+        String fileName = System.currentTimeMillis() + userId +"."+split[1];
+        byte[] bytes;
+        try {
+            bytes = file.getBytes();
+            uploadPic(bytes,path,fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResultResponse.fail(e.getMessage());
+        }
+        StuInfo stuInfo = new StuInfo();
+        stuInfo.setId(userId);
+        stuInfo.setImgUrl(path+"/"+fileName);
+        stuDao.updateByPrimaryKeySelective(stuInfo);
+        return ResultResponse.success();
+    }
+
+    @Override
+    public ResultResponse getAlarm(String userId) {
+        String msg = (String) redisUtils.get(userId+"_alarm");
+        if (msg == null){
+            return ResultResponse.success();
+        }
+        return ResultResponse.success(msg);
     }
 
     /**
@@ -236,5 +305,23 @@ public class StudentServiceImpl implements StudentService {
             users.add(user);
         });
         return users;
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 图片上传
+     * @Date 14:47 2020/12/30
+     * @Param [file, filePath, fileName]
+     * @return void
+     */
+    private void uploadPic(byte[] file,String filePath,String fileName) throws IOException {
+        File targetFile = new File(filePath);
+        if (!targetFile.exists()){
+            targetFile.mkdirs();
+        }
+        FileOutputStream fileOutputStream = new FileOutputStream(filePath+"/"+fileName);
+        fileOutputStream.write(file);
+        fileOutputStream.flush();
+        fileOutputStream.close();
     }
 }

@@ -24,6 +24,7 @@ import tk.mybatis.mapper.entity.Example;
 import tk.mybatis.mapper.util.Sqls;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -226,7 +227,7 @@ public class ExamServiceImpl implements ExamService {
     public ResultResponse alarmExam(String examId) {
 
         ExamInfo examInfo = examDao.selectByPrimaryKey(examId);
-        if (!examInfo.equals(ExamEnum.PENDING.getEncode())){
+        if (!examInfo.getStatus().equals(ExamEnum.PENDING.getEncode())){
             return ResultResponse.fail("该考试已结束或正在进行中");
         }
         Example example = Example.builder(StuTeaCourseLink.class).andWhere(Sqls.custom()
@@ -238,11 +239,13 @@ public class ExamServiceImpl implements ExamService {
         Subject subject = courseDao.selectByPrimaryKey(examInfo.getCourseId());
         stuTeaCourseLinks.forEach(stuTeaCourseLink -> {
             String alarm = (String) redisUtils.get(stuTeaCourseLink.getStuId() + "_alarm");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String format = sdf.format(examInfo.getStartTime());
             if (alarm == null){
                 redisUtils.setex(stuTeaCourseLink.getStuId() + "_alarm",
-                        "请于" + examInfo.getStartTime() + "准时参加" + subject.getCourseName() + "考试",time - unix);
+                        "请于" + format + "准时参加" + subject.getCourseName() + "考试",time - unix);
             }else {
-                alarm += ";请于" + examInfo.getStartTime() + "准时参加" + subject.getCourseName() + "考试";
+                alarm += ";请于" + format + "准时参加" + subject.getCourseName() + "考试";
                 redisUtils.setex(stuTeaCourseLink.getStuId() + "_alarm",alarm,time - unix);
             }
         });

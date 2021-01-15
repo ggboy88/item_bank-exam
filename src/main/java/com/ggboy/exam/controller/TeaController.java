@@ -188,6 +188,13 @@ public class TeaController {
         return teaService.getOwnMsg(userId);
     }
 
+    /**
+     * @Author qiang
+     * @Description //TODO 更新用户数据
+     * @Date 14:51 2021/1/13
+     * @Param [updateUser, request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
     @PostMapping("/updateUser")
     public ResultResponse updateUser(@RequestBody JSONObject updateUser,HttpServletRequest request){
         String token = request.getHeader("token");
@@ -196,6 +203,13 @@ public class TeaController {
         return teaService.updateUser(updateUserVo,userId);
     }
 
+    /**
+     * @Author qiang
+     * @Description //TODO 头像上传
+     * @Date 14:51 2021/1/13
+     * @Param [file, request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
     @PostMapping("/uploadHead")
     public ResultResponse uploadHead(@RequestParam("file") MultipartFile file,HttpServletRequest request){
         String token = request.getHeader("token");

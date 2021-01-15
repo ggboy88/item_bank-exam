@@ -1,10 +1,13 @@
 package com.ggboy.exam.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ggboy.exam.beans.TeaCourseLinkResponse;
+import com.ggboy.exam.beans.vo.UpdateUserVo;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.service.StudentService;
 import com.ggboy.exam.utils.TokenUtil;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -79,11 +82,75 @@ public class StuController {
         return studentService.startExam(examId);
     }
 
+    /**
+     * @Author qiang
+     * @Description //TODO 查询用户数据
+     * @Date 15:02 2021/1/13
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
     @GetMapping("/queryUser")
     public ResultResponse queryStuInfo(HttpServletRequest request){
         String token = request.getHeader("token");
         String userId = TokenUtil.getUserId(token);
         return studentService.queryStu(userId);
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 密码校验
+     * @Date 15:02 2021/1/13
+     * @Param [password, request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/checkPassword")
+    public ResultResponse checkPassword(@RequestParam("password") String password,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.checkPass(password,userId);
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 更新用户数据
+     * @Date 15:02 2021/1/13
+     * @Param [updateUser, request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/updateUser")
+    public ResultResponse updateUser(@RequestBody JSONObject updateUser,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        UpdateUserVo updateUserVo = updateUser.toJavaObject(UpdateUserVo.class);
+        return studentService.updateUser(updateUserVo,userId);
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 上传头像
+     * @Date 15:28 2021/1/13
+     * @Param [file, request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @PostMapping("/uploadHead")
+    public ResultResponse uploadHead(@RequestParam("file") MultipartFile file, HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.uploadHead(file,userId);
+    }
+
+    /**
+     * @Author qiang
+     * @Description //TODO 通知
+     * @Date 17:01 2021/1/14
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/getAlarm")
+    public ResultResponse alarm(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.getAlarm(userId);
     }
 
 }

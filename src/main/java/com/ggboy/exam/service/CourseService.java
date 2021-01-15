@@ -10,4 +10,5 @@ public interface CourseService {
 
     ResultResponse selectTeaSpecialtyName(String userId);
 
+    ResultResponse selectStuSpecialtyName(String userId);
 }

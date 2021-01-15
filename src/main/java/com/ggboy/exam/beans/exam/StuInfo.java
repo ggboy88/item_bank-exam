@@ -38,7 +38,7 @@ public class StuInfo {
     private String salt;
 
     @Column(name = "image_url")
-    private String imUrl;
+    private String imgUrl;
 
     public StuInfo(String phone){
         this.phone = phone;

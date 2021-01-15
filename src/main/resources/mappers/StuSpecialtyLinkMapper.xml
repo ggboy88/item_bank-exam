@@ -10,16 +10,15 @@
     </resultMap>
 
     <select id="selectSubjectsByStuId" parameterType="String" resultMap="SubMap" resultType="java.util.List">
-        SELECT
-        sub.*
-        FROM
-        subjectinfo sub
-        JOIN
-        stu_specialty_link ss
-        ON
-        ss.specialty_id = sub.Course_Specialty
-        WHERE
-        ss.stu_id = #{stuId}
+    SELECT
+	sub.*
+    FROM
+	subjectinfo sub
+	JOIN stu_specialty_link ss ON ss.specialty_id = sub.Course_Specialty
+    WHERE
+	ss.stu_id = #{stuId}
+	AND
+	sub.Course_id NOT IN (SELECT sub1.Course_id FROM subjectinfo sub1 JOIN stu_tea_course_link stcl ON sub1.Course_id = stcl.course_id WHERE stcl.stu_id = #{stuId} AND delete_flag = 1)
     </select>
 
 </mapper>

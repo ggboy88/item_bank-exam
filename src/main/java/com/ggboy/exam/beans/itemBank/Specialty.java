@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Data
@@ -12,6 +13,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @Table(name = "specialtyinfo")
 public class Specialty {
+    @Id
     @Column(name = "Specialty_id")
     private Integer SpecialtyId;
     @Column(name = "Specialty_name")

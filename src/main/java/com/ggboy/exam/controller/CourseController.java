@@ -65,4 +65,11 @@ public class CourseController {
         return courseService.selectTeaSpecialtyName(userId);
     }
 
+    @GetMapping("/selectStuSpecialtyName")
+    public ResultResponse selectStuSpecialtyName(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return courseService.selectStuSpecialtyName(userId);
+    }
+
 }
