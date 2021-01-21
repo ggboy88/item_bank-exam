@@ -1,5 +1,6 @@
 package com.ggboy.exam.service.impl;
 
+import com.ggboy.exam.beans.ExamSearchCondition;
 import com.ggboy.exam.beans.PaperInfoResponse;
 import com.ggboy.exam.beans.StuCourseInfoResponse;
 import com.ggboy.exam.beans.TeaCourseLinkResponse;
@@ -13,6 +14,7 @@ import com.ggboy.exam.dao.itemBank.*;
 import com.ggboy.exam.service.StudentService;
 import com.ggboy.exam.utils.MD5Util;
 import com.ggboy.exam.utils.RedisUtils;
+import com.ggboy.exam.utils.UnixUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -129,6 +132,15 @@ public class StudentServiceImpl implements StudentService {
             List<ExamInfo> examInfos = examDao.selectByExample(example1);
 
             if (examInfos.size() != 0){
+                examInfos.forEach(examInfo -> {
+                    if (examInfo.getStatus().equalsIgnoreCase(ExamEnum.PENDING.getEncode())){
+                        examInfo.setStatus(ExamEnum.PENDING.getMessage());
+                    }else if (examInfo.getStatus().equalsIgnoreCase(ExamEnum.END.getEncode())){
+                        examInfo.setStatus(ExamEnum.END.getMessage());
+                    }else {
+                        examInfo.setStatus(ExamEnum.PROCESSING.getMessage());
+                    }
+                });
                 stuCourseInfoResponse.setHasExam(true);
                 stuCourseInfoResponse.setExamInfos(examInfos);
             }
@@ -143,13 +155,98 @@ public class StudentServiceImpl implements StudentService {
 
     /**
      * @Author qiang
+     * @Description //TODO 查询当前学生所选课程信息
+     * @Date 10:15 2020/11/24
+     * @Param [userId]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @Override
+    public ResultResponse selectAllCourse(String userId, ExamSearchCondition examSearchCondition) {
+        Sqls custom = Sqls.custom();
+        if (examSearchCondition.getStartTime() != null){
+            custom.andGreaterThanOrEqualTo("startTime",examSearchCondition.getStartTime());
+        }
+        if (examSearchCondition.getEndTime() != null){
+            custom.andLessThanOrEqualTo("endTime",examSearchCondition.getEndTime());
+        }
+        if (examSearchCondition.getCourseName() != null && !"".equals(examSearchCondition.getCourseName())){
+            Example example = Example.builder(Subject.class).andWhere(Sqls.custom()
+                    .andLike("courseName", examSearchCondition.getCourseName())).build();
+            Subject subject = courseDao.selectOneByExample(example);
+            custom.andEqualTo("courseId",subject.getCourseId());
+        }
+        if (examSearchCondition.getPaperId() != null && !"".equals(examSearchCondition.getPaperId())){
+            custom.andEqualTo("paperId",examSearchCondition.getPaperId());
+        }
+        if (examSearchCondition.getStatus() != null && !"".equals(examSearchCondition.getStatus())){
+            custom.andEqualTo("status",examSearchCondition.getStatus());
+        }
+
+        Example example = Example.builder(StuTeaCourseLink.class).andWhere(Sqls.custom()
+                .andEqualTo("stuId", userId).andEqualTo("deleteFlag",1)).build();
+        List<StuTeaCourseLink> stuTeaCourseLinks = stuTeaCourseLinkDao.selectByExample(example);
+        if (stuTeaCourseLinks.size() == 0){
+            return ResultResponse.fail("当前用户无课程");
+        }
+        List<StuCourseInfoResponse> stuCourseInfoResponses = new ArrayList<>();
+        stuTeaCourseLinks.forEach(stuTeaCourseLink -> {
+            StuCourseInfoResponse stuCourseInfoResponse = new StuCourseInfoResponse();
+            Subject subject = courseDao.selectByPrimaryKey(stuTeaCourseLink.getCourseId());
+            Example example1 = Example.builder(ExamInfo.class)
+                    .andWhere(Sqls.custom()
+                            .andEqualTo("courseId", subject.getCourseId())
+                            .andEqualTo("teacherId", stuTeaCourseLink.getTeaId()))
+                    .andWhere(custom)
+                    .build();
+            List<ExamInfo> examInfos = examDao.selectByExample(example1);
+
+            if (examInfos.size() != 0){
+                examInfos.forEach(examInfo -> {
+                    if (examInfo.getStatus().equalsIgnoreCase(ExamEnum.PENDING.getEncode())){
+                        examInfo.setStatus(ExamEnum.PENDING.getMessage());
+                    }else if (examInfo.getStatus().equalsIgnoreCase(ExamEnum.END.getEncode())){
+                        examInfo.setStatus(ExamEnum.END.getMessage());
+                    }else {
+                        examInfo.setStatus(ExamEnum.PROCESSING.getMessage());
+                    }
+                });
+                stuCourseInfoResponse.setHasExam(true);
+                stuCourseInfoResponse.setExamInfos(examInfos);
+            }
+            stuCourseInfoResponse.setTeaName(userDao.selectUserNameById(stuTeaCourseLink.getTeaId()));
+            stuCourseInfoResponse.setSubject(subject);
+
+            stuCourseInfoResponses.add(stuCourseInfoResponse);
+
+        });
+
+        PageInfo<StuCourseInfoResponse> pageInfo = new PageInfo<>(stuCourseInfoResponses);
+        return ResultResponse.success(pageInfo);
+    }
+
+    @Override
+    public ResultResponse examDetails(String userId) {
+        String examId = (String) redisUtils.get(userId+"_exam");
+        ExamInfo examInfo = examDao.selectByPrimaryKey(examId);
+        Paper paper = paperDao.selectByPrimaryKey(examInfo.getPaperId());
+        PaperInfoResponse paperInfoResponse = (PaperInfoResponse) redisUtils.get(paper.getPaperId().toString());
+        if (paperInfoResponse == null){
+            PaperInfoResponse paperInfoResponse1 = searchPaperDetails(paper);
+            redisUtils.set(paper.getPaperId().toString(),paperInfoResponse1);
+            return ResultResponse.success(paperInfoResponse1);
+        }
+        return ResultResponse.success(paperInfoResponse);
+    }
+
+    /**
+     * @Author qiang
      * @Description //TODO 开始考试
      * @Date 10:44 2020/11/24
      * @Param [examId]
      * @return com.ggboy.exam.common.ResultResponse
      */
     @Override
-    public ResultResponse startExam(String examId) {
+    public ResultResponse startExam(String examId,String userId) {
         ExamInfo examInfo = examDao.selectByPrimaryKey(examId);
         if (ExamEnum.END.getEncode().equals(examInfo.getStatus())){
             return ResultResponse.fail("该考试已结束");
@@ -159,9 +256,16 @@ public class StudentServiceImpl implements StudentService {
             return ResultResponse.fail("考试未开始");
         }
 
-        Paper paper = paperDao.selectByPrimaryKey(examInfo.getPaperId());
-        PaperInfoResponse paperInfoResponse = searchPaperDetails(paper);
-        return ResultResponse.success(paperInfoResponse);
+        Long existTime = examInfo.getEndTime().getTime()/1000 - UnixUtils.getUnix();
+        String pendingExam = (String) redisUtils.get(userId+"_exam");
+        if (pendingExam == null){
+            redisUtils.setex(userId+"_exam",examId,existTime);
+            return ResultResponse.success();
+        }else if (examId.equalsIgnoreCase(pendingExam)){
+            return ResultResponse.success();
+        }else {
+            return ResultResponse.fail("失败，请确认是否有其他正在进行的考试");
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.ggboy.exam.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.ggboy.exam.beans.ExamSearchCondition;
 import com.ggboy.exam.beans.TeaCourseLinkResponse;
 import com.ggboy.exam.beans.vo.UpdateUserVo;
 import com.ggboy.exam.common.ResultResponse;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Timestamp;
 
 /**
  * @Author qiang
@@ -70,6 +72,28 @@ public class StuController {
         return studentService.selectCourse(userId);
     }
 
+   /**
+    * @Author ggboy88
+    * @Description //TODO 查询当前学生所选课程以及所有考试信息
+    * @Date 2021/1/15 16:19
+    * @Param [request]
+    * @return com.ggboy.exam.common.ResultResponse
+    */
+    @GetMapping("/selectAllCourseInfo")
+    public ResultResponse selectAllCourseInfo(HttpServletRequest request,
+                                              @RequestParam(name = "pageNum",defaultValue = "1",required = false) Integer pageNum,
+                                              @RequestParam(name = "pageSize",defaultValue = "5",required = false) Integer pageSize,
+                                              @RequestParam(value = "startTime",required = false) Timestamp startTime,
+                                              @RequestParam(value = "endTime",required = false) Timestamp endTime,
+                                              @RequestParam(value = "courseName",required = false) String courseName,
+                                              @RequestParam(value = "paperId",required = false) String paperId,
+                                              @RequestParam(value = "status",required = false) String status){
+        ExamSearchCondition examSearchCondition = new ExamSearchCondition(pageNum, pageSize, startTime, endTime, courseName, paperId, status);
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.selectAllCourse(userId,examSearchCondition);
+    }
+
     /**
      * @Author qiang
      * @Description //TODO 开始考试并查看试卷内容
@@ -78,8 +102,10 @@ public class StuController {
      * @return com.ggboy.exam.common.ResultResponse
      */
     @GetMapping("/startExam")
-    public ResultResponse startExam(@RequestParam("examId") String examId){
-        return studentService.startExam(examId);
+    public ResultResponse startExam(@RequestParam("examId") String examId,HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.startExam(examId,userId);
     }
 
     /**
@@ -151,6 +177,20 @@ public class StuController {
         String token = request.getHeader("token");
         String userId = TokenUtil.getUserId(token);
         return studentService.getAlarm(userId);
+    }
+
+    /**
+     * @Author ggboy88
+     * @Description //TODO 查询试卷详情
+     * @Date 2021/1/18 17:23
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/examDetails")
+    public ResultResponse examDetails(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String userId = TokenUtil.getUserId(token);
+        return studentService.examDetails(userId);
     }
 
 }

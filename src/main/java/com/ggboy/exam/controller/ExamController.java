@@ -1,5 +1,7 @@
 package com.ggboy.exam.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ggboy.exam.beans.ExamSearchCondition;
 import com.ggboy.exam.beans.exam.ExamInfo;
@@ -12,6 +14,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @Author qiang
@@ -115,4 +120,51 @@ public class ExamController {
         String[] split = examId.split("delete");
         return examService.deleteExam(split[0]);
     }
+
+    /**
+     * @Author ggboy88
+     * @Description //TODO 查看是否有正在进行的考试
+     * @Date 2021/1/18 16:49
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/hasExam")
+    public ResultResponse hasExam(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
+        return examService.hasExam(user);
+    }
+
+    @PostMapping("/submit")
+    public ResultResponse submitExam(@RequestBody JSONObject jsonObject, HttpServletRequest request){
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
+        Map<String,Object> map = new HashMap<>();
+        for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
+            map.put(entry.getKey(), entry.getValue());
+        }
+        return examService.submitExamAnsw(map,user);
+    }
+
+    @GetMapping("/isSubmit")
+    public ResultResponse isSubmit(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
+        return examService.isSubmit(user);
+    }
+
+    /**
+     * @Author ggboy88
+     * @Description //TODO 查询考试结束时间
+     * @Date 2021/1/21 11:07
+     * @Param [request]
+     * @return com.ggboy.exam.common.ResultResponse
+     */
+    @GetMapping("/examTime")
+    public ResultResponse examTime(HttpServletRequest request){
+        String token = request.getHeader("token");
+        String user = TokenUtil.getUserId(token);
+        return examService.examTime(user);
+    }
+
 }

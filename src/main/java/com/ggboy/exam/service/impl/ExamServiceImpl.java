@@ -5,11 +5,13 @@ import com.ggboy.exam.beans.ExamSearchCondition;
 import com.ggboy.exam.beans.PaperInfoResponse;
 import com.ggboy.exam.beans.PaperListResponse;
 import com.ggboy.exam.beans.exam.ExamInfo;
+import com.ggboy.exam.beans.exam.StuExamLink;
 import com.ggboy.exam.beans.exam.StuTeaCourseLink;
 import com.ggboy.exam.beans.itemBank.*;
 import com.ggboy.exam.common.ExamEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.dao.exam.ExamDao;
+import com.ggboy.exam.dao.exam.StuExamLinkDao;
 import com.ggboy.exam.dao.exam.StuTeaCourseLinkDao;
 import com.ggboy.exam.dao.itemBank.*;
 import com.ggboy.exam.service.ExamService;
@@ -28,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ExamServiceImpl implements ExamService {
@@ -61,6 +64,9 @@ public class ExamServiceImpl implements ExamService {
 
     @Resource
     private RedisUtils redisUtils;
+
+    @Resource
+    private StuExamLinkDao stuExamLinkDao;
 
     @Override
     public ResultResponse addExam(JSONObject examInfo,Integer userId) {
@@ -257,6 +263,56 @@ public class ExamServiceImpl implements ExamService {
     public ResultResponse deleteExam(String examId) {
         examDao.deleteByPrimaryKey(examId);
         return ResultResponse.success();
+    }
+
+    @Override
+    public ResultResponse hasExam(String user) {
+        String exam = (String) redisUtils.get(user+"_exam");
+        if (exam == null){
+            return ResultResponse.success(false);
+        }else {
+            return ResultResponse.success(exam);
+        }
+    }
+
+    @Override
+    public ResultResponse examTime(String user) {
+        String exam = (String) redisUtils.get(user+"_exam");
+        ExamInfo examInfo = examDao.selectByPrimaryKey(exam);
+        Date endTime = examInfo.getEndTime();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String format = sdf.format(endTime);
+        return ResultResponse.success(format);
+    }
+
+    @Override
+    public ResultResponse submitExamAnsw(Map<String, Object> map,String user) {
+        String exam = (String) redisUtils.get(user+"_exam");
+        ExamInfo examInfo = examDao.selectByPrimaryKey(exam);
+        map.forEach((k,v)->{
+            StuExamLink stuExamLink = new StuExamLink();
+            stuExamLink.setStuId(user);
+            stuExamLink.setExamId(exam);
+            stuExamLink.setPaperId(examInfo.getPaperId());
+            stuExamLink.setQuestionId(k);
+            stuExamLink.setAnsw(String.valueOf(v));
+            stuExamLinkDao.insert(stuExamLink);
+        });
+        return ResultResponse.success();
+    }
+
+    @Override
+    public ResultResponse isSubmit(String user) {
+        String exam = (String) redisUtils.get(user+"_exam");
+        Example example = Example.builder(StuExamLink.class)
+                .andWhere(Sqls.custom()
+                        .andEqualTo("stuId", user)
+                        .andEqualTo("examId", exam)).build();
+        List<StuExamLink> stuExamLinks = stuExamLinkDao.selectByExample(example);
+        if (!stuExamLinks.isEmpty()){
+            return ResultResponse.success(true);
+        }
+        return ResultResponse.success(false);
     }
 
 

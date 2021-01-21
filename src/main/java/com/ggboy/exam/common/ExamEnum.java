@@ -3,7 +3,7 @@ package com.ggboy.exam.common;
 public enum ExamEnum {
     PENDING("pending","待执行"),
     PROCESSING("processing","考试中"),
-    END("end","已完成"),
+    END("end","已结束"),
     ;
 
     private String encode;

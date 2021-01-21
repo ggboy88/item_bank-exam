@@ -6,6 +6,7 @@ import com.ggboy.exam.beans.exam.ExamInfo;
 import com.ggboy.exam.common.ResultResponse;
 
 import java.util.Date;
+import java.util.Map;
 
 public interface ExamService {
 
@@ -24,4 +25,12 @@ public interface ExamService {
     ResultResponse alarmExam(String examId);
 
     ResultResponse deleteExam(String examId);
+
+    ResultResponse hasExam(String user);
+
+    ResultResponse examTime(String user);
+
+    ResultResponse submitExamAnsw(Map<String, Object> map,String user);
+
+    ResultResponse isSubmit(String user);
 }

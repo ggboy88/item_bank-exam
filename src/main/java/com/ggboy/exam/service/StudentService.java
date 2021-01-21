@@ -1,5 +1,6 @@
 package com.ggboy.exam.service;
 
+import com.ggboy.exam.beans.ExamSearchCondition;
 import com.ggboy.exam.beans.TeaCourseLinkResponse;
 import com.ggboy.exam.beans.vo.UpdateUserVo;
 import com.ggboy.exam.common.ResultResponse;
@@ -13,7 +14,7 @@ public interface StudentService {
 
     ResultResponse selectCourse(String userId);
 
-    ResultResponse startExam(String examId);
+    ResultResponse startExam(String examId,String userId);
 
     ResultResponse queryStu(String userId);
 
@@ -24,4 +25,8 @@ public interface StudentService {
     ResultResponse uploadHead(MultipartFile file, String userId);
 
     ResultResponse getAlarm(String userId);
+
+    ResultResponse selectAllCourse(String userId, ExamSearchCondition examSearchCondition);
+
+    ResultResponse examDetails(String userId);
 }
