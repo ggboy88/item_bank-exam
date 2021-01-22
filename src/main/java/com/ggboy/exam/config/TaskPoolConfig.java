@@ -24,4 +24,17 @@ public class TaskPoolConfig {
         return taskExecutor;
     }
 
+    @Bean("correctExecutor")
+    public Executor correctExecutor(){
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(10);
+        taskExecutor.setMaxPoolSize(20);
+        taskExecutor.setQueueCapacity(200);
+        taskExecutor.setKeepAliveSeconds(60);
+        taskExecutor.setThreadNamePrefix("correctExecutor--");
+        taskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+        taskExecutor.setAwaitTerminationSeconds(60);
+        return taskExecutor;
+    }
+
 }

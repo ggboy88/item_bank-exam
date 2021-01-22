@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Data
@@ -12,6 +13,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @Table(name = "questiontypeinfo")
 public class QstType {
+    @Id
     @Column(name = "Question_id")
     private String questionId;
     @Column(name = "Question_name")

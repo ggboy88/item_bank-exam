@@ -19,7 +19,7 @@ import javax.persistence.Table;
 @Table(name = "stu_exam_answ")
 @AllArgsConstructor
 @NoArgsConstructor
-public class StuExamLink {
+public class StuExamAnsw {
 
     @Id
     @KeySql(genId = UUIDGenId.class)
@@ -40,6 +40,9 @@ public class StuExamLink {
 
     @Column(name = "exam_id")
     private String examId;
+
+    @Column(name = "is_correct")
+    private String isCorrect;
 
 
 }

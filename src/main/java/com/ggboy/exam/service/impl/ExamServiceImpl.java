@@ -5,21 +5,21 @@ import com.ggboy.exam.beans.ExamSearchCondition;
 import com.ggboy.exam.beans.PaperInfoResponse;
 import com.ggboy.exam.beans.PaperListResponse;
 import com.ggboy.exam.beans.exam.ExamInfo;
-import com.ggboy.exam.beans.exam.StuExamLink;
+import com.ggboy.exam.beans.exam.StuExamAnsw;
 import com.ggboy.exam.beans.exam.StuTeaCourseLink;
 import com.ggboy.exam.beans.itemBank.*;
 import com.ggboy.exam.common.ExamEnum;
 import com.ggboy.exam.common.ResultResponse;
 import com.ggboy.exam.dao.exam.ExamDao;
-import com.ggboy.exam.dao.exam.StuExamLinkDao;
+import com.ggboy.exam.dao.exam.StuExamAnswDao;
 import com.ggboy.exam.dao.exam.StuTeaCourseLinkDao;
 import com.ggboy.exam.dao.itemBank.*;
 import com.ggboy.exam.service.ExamService;
 import com.ggboy.exam.utils.RedisUtils;
 import com.ggboy.exam.utils.UnixUtils;
-import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ExamServiceImpl implements ExamService {
@@ -66,7 +67,10 @@ public class ExamServiceImpl implements ExamService {
     private RedisUtils redisUtils;
 
     @Resource
-    private StuExamLinkDao stuExamLinkDao;
+    private StuExamAnswDao stuExamAnswDao;
+
+    @Resource
+    private QstTypeDao qstTypeDao;
 
     @Override
     public ResultResponse addExam(JSONObject examInfo,Integer userId) {
@@ -219,6 +223,7 @@ public class ExamServiceImpl implements ExamService {
         try {
             examInfos.forEach(examInfo -> {
                 examInfo.setStatus(ExamEnum.END.getEncode());
+                checkAnsw(examInfo);
                 examDao.updateByPrimaryKey(examInfo);
             });
         }catch (Exception e){
@@ -290,13 +295,13 @@ public class ExamServiceImpl implements ExamService {
         String exam = (String) redisUtils.get(user+"_exam");
         ExamInfo examInfo = examDao.selectByPrimaryKey(exam);
         map.forEach((k,v)->{
-            StuExamLink stuExamLink = new StuExamLink();
-            stuExamLink.setStuId(user);
-            stuExamLink.setExamId(exam);
-            stuExamLink.setPaperId(examInfo.getPaperId());
-            stuExamLink.setQuestionId(k);
-            stuExamLink.setAnsw(String.valueOf(v));
-            stuExamLinkDao.insert(stuExamLink);
+            StuExamAnsw stuExamAnsw = new StuExamAnsw();
+            stuExamAnsw.setStuId(user);
+            stuExamAnsw.setExamId(exam);
+            stuExamAnsw.setPaperId(examInfo.getPaperId());
+            stuExamAnsw.setQuestionId(k);
+            stuExamAnsw.setAnsw(String.valueOf(v));
+            stuExamAnswDao.insert(stuExamAnsw);
         });
         return ResultResponse.success();
     }
@@ -304,12 +309,12 @@ public class ExamServiceImpl implements ExamService {
     @Override
     public ResultResponse isSubmit(String user) {
         String exam = (String) redisUtils.get(user+"_exam");
-        Example example = Example.builder(StuExamLink.class)
+        Example example = Example.builder(StuExamAnsw.class)
                 .andWhere(Sqls.custom()
                         .andEqualTo("stuId", user)
                         .andEqualTo("examId", exam)).build();
-        List<StuExamLink> stuExamLinks = stuExamLinkDao.selectByExample(example);
-        if (!stuExamLinks.isEmpty()){
+        List<StuExamAnsw> stuExamAnsws = stuExamAnswDao.selectByExample(example);
+        if (!stuExamAnsws.isEmpty()){
             return ResultResponse.success(true);
         }
         return ResultResponse.success(false);
@@ -372,6 +377,44 @@ public class ExamServiceImpl implements ExamService {
         paperInfoResponse.setPaperLevel(paper.getPaperLevel());
 
         return paperInfoResponse;
+    }
+
+    /**
+     * @Author ggboy88
+     * @Description //TODO 校对答案
+     * @Date 2021/1/21 17:25
+     * @Param [examInfo]
+     * @return void
+     */
+    @Async("correctExecutor")
+    public void checkAnsw(ExamInfo examInfo){
+        Example example = Example.builder(StuExamAnsw.class)
+                .andWhere(Sqls.custom().andEqualTo("examId", examInfo.getId())).build();
+        List<StuExamAnsw> stuExamAnsws = stuExamAnswDao.selectByExample(example);
+        stuExamAnsws.stream().collect(Collectors.groupingBy(StuExamAnsw::getStuId)).forEach((k, v) -> {
+            v.forEach(stuExamAnsw -> {
+                String questionId = stuExamAnsw.getQuestionId();
+                QstType qstType = qstTypeDao.selectByPrimaryKey(questionId);
+                if ("选择题".equals(qstType.getQuestionName())){
+                    ChoiceQst choiceQst = choiceDao.selectChoiceQstByQuestionId(questionId);
+                    if (choiceQst.getChoiceQstAnsw().equals(stuExamAnsw.getAnsw())){
+                        stuExamAnsw.setIsCorrect("1");
+                    }else {
+                        stuExamAnsw.setIsCorrect("0");
+                    }
+                    stuExamAnswDao.updateByPrimaryKeySelective(stuExamAnsw);
+                }
+                if ("判断题".equals(qstType.getQuestionName())){
+                    TOFQst tofQst = tofDao.selectTOFQstByQuestionId(questionId);
+                    if (tofQst.getTOFAnsw().equals(stuExamAnsw.getAnsw())){
+                        stuExamAnsw.setIsCorrect("1");
+                    }else {
+                        stuExamAnsw.setIsCorrect("0");
+                    }
+                    stuExamAnswDao.updateByPrimaryKeySelective(stuExamAnsw);
+                }
+            });
+        });
     }
 
 }
